@@ -364,7 +364,7 @@ def mask_run_epoch(model, optim, train_dataloader, val_dataloader, grad_clip=10.
     model.train()                                                      # Set the model to train mode (Should't matter here as we don't have dropout, but good practice to keep in)
 
     for i,data in enumerate(train_dataloader):                         # For each batch of data in the dataset
-        coordinates, geomouts, node_features, mask = data['geomins'].float(), data['geomouts'].float(), data['encodings'].float(), data['mask'].float()
+        coordinates, geomouts, node_features, mask = data['geomins'].float().to(device), data['geomouts'].float().to(device), data['encodings'].float().to(device), data['mask'].float().to(device)
 
         pred = model(node_features, coordinates, mask)
         optim.zero_grad()                                              # Delete old gradients
