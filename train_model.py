@@ -469,21 +469,21 @@ train, validation = train_test_split(data, test_size=100, random_state=42)
 batch_size = 1
 train_dataloader = torch.utils.data.DataLoader(train, 
                                                batch_size=batch_size,   # Batch size
-                                               num_workers=4,           # Number of cpu's allocated to load the data (recommended is 4/GPU)
+                                               num_workers=0,           # Number of cpu's allocated to load the data (recommended is 4/GPU)
                                                shuffle=True,            # Whether to randomly shuffle data
                                                pin_memory=True,         # Enables faster data transfer to CUDA-enabled GPUs (page-locked memory)
                                                )
 
 val_dataloader = torch.utils.data.DataLoader(validation, 
                                              batch_size=batch_size,
-                                             num_workers=4,
+                                             num_workers=0,
                                              shuffle=True,
                                              pin_memory=True,
                                              )
 
 test_dataloader = torch.utils.data.DataLoader(test, 
                                               batch_size=batch_size,
-                                              num_workers=4,
+                                              num_workers=0,
                                               shuffle=True,
                                               pin_memory=True,
                                               )
