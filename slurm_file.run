@@ -1,0 +1,18 @@
+#!/bin/bash
+#SBATCH -J ab_train # Job name
+#SBATCH --time=14-00:00:00 # Walltime
+#SBATCH --cluster swan
+#SBATCH --cpus-per-task=1
+#SBATCH --mem=50000 # total memory (in MB) ### commented out
+#SBATCH --gres=gpu:1
+#SBATCH --ntasks=1 # 1 tasks
+#SBATCH --nodes=1 # number of nodes
+#SBATCH --partition=high-opig-gpu # Select a specific partition rather than default
+#SBATCH -w nagagpu03.cpu.stats.ox.ac.uk # Provide a specific node/nodelist rather than the standard nodelist associated with the partition (useful if you have a data setup on one specific node)
+#SBATCH --output=/data/localhost/not-backed-up/spoendli/slurm_%j.out # Writes standard output to this file. %j is jobnumber
+#SBATCH --error=/data/localhost/not-backed-up/spoendli/slurm_%j.out # Writes error messages to this file. %j is jobnumber
+
+
+cd /homes/spoendli/ablooper/
+conda activate ablooper
+python -u train_model.py > train_model.out
