@@ -392,6 +392,10 @@ with open('train_data/CDR_seqs_test.npy', 'rb') as infile:
     CDR_seqs_test = np.load(infile, allow_pickle=True)
 
 # format data
+# torch settings
+device = "cuda" if torch.cuda.is_available() else "cpu"
+torch.set_default_dtype(torch.float)
+
 geomins, node_encodings = prepare_model_inputs(CDR_seqs, CDR_BB_coords)
 geomouts = prepare_model_output(CDR_BB_coords)
 
@@ -416,7 +420,7 @@ test = concatenate_data(node_encodings_test, geomins_test, geomouts_test, masks_
 train, validation = train_test_split(data, test_size=100, random_state=42)
 
 # data loaders
-batch_size = 32
+batch_size = 1
 train_dataloader = torch.utils.data.DataLoader(train, 
                                                batch_size=batch_size,   # Batch size
                                                num_workers=4,           # Number of cpu's allocated to load the data (recommended is 4/GPU)
@@ -439,9 +443,6 @@ test_dataloader = torch.utils.data.DataLoader(test,
                                               )
 
 # train model
-# torch settings
-device = "cuda" if torch.cuda.is_available() else "cpu"
-torch.set_default_dtype(torch.float)
 
 ourlogger = NeptuneLogger(api_key="eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiIyMGI0ZTUzYy0zMTBkLTRjMWMtODhjNS0wNTJmNjA1MzhmOGMifQ==",
               project="fspoendlin/ABlooper",
