@@ -353,7 +353,7 @@ def atom_dist_penal(geom, pred):
 class pl_EGNNModel(pytorch_lightning.LightningModule):
     def __init__(self):
         super().__init__()
-        self.egnnmodel = MaskDecoyGen()
+        self.egnnmodel = MaskDecoyGen(decoys=1)
 
     def forward(self, node_encodings, coordinates, mask):
 
