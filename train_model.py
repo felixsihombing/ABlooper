@@ -490,7 +490,7 @@ test_dataloader = torch.utils.data.DataLoader(test,
 
 # train model
 # initialise model
-model = MaskDecoyGen().to(device = device).float()
+model = MaskDecoyGen(decoys=1).to(device = device).float()
 
 # set optimiser
 optimiser = torch.optim.RAdam(model.parameters(), lr=1e-3, weight_decay=1e-3)
