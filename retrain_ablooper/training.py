@@ -80,7 +80,7 @@ def mask_run_epoch(model, optim, train_dataloader, val_dataloader, decoys=5, gra
     
     return np.mean(epoch_train_losses), np.mean(epoch_val_losses), cdr_rmsds.mean(0)
 
-def train_model(model, optimiser, train_dataloader, val_dataloader, n_epochs=5000, patience=150, decoys=5):
+def train_model(model, optimiser, train_dataloader, val_dataloader, training_name='', n_epochs=5000, patience=150, decoys=5):
     '''
     Runs run_epoch function a specified number of times and keeps track of loss.
     '''
@@ -97,7 +97,8 @@ def train_model(model, optimiser, train_dataloader, val_dataloader, n_epochs=500
         cdr_rmsds.append(cdr_rmsd.tolist())
 
         if np.min(val_losses) == val_loss:                                                 # If it is the best model on the validation set, save it
-            torch.save(model.state_dict(), "best_model")                                   # This is how you save models in pytorch
+            best_model_name = "best_model" + training_name
+            torch.save(model.state_dict(), best_model_name)                                   # This is how you save models in pytorch
             epochs_without_improvement = 0
 
         elif epochs_without_improvement < patience:                                        # If the model hasn't improved this epoch store that
@@ -112,7 +113,8 @@ def train_model(model, optimiser, train_dataloader, val_dataloader, n_epochs=500
             torch.save(model.state_dict(), "previous_weights")        
             torch.save(optimiser.state_dict(), "previous_optim")
 
-        with open('training_loss.json', 'w') as f:
+        losses_file = "training_loss" + training_name + ".json" 
+        with open(losses_file, 'w') as f:
             dic = {'train_losses': train_losses,
                    'val_lossers': val_losses,
                    'cdr_rmsd': cdr_rmsds}

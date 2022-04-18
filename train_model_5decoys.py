@@ -93,4 +93,4 @@ model = MaskDecoyGen(decoys=5).to(device = device).float()
 optimiser = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-3)
 
 # Step to actually train the network
-train_losses, val_losses = train_model(model, optimiser, train_dataloader, val_dataloader, n_epochs=5000, patience=150, decoys=5)
+train_losses, val_losses = train_model(model, optimiser, train_dataloader, val_dataloader, training_name='-1804-Adam-5', n_epochs=5000, patience=150, decoys=5)
