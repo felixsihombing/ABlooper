@@ -5,7 +5,7 @@ import torch
 import numpy as np
 import json
 from rich.progress import track
-from retrain_ablooper import *
+from loss_functions import *
 
 # train for one epoch
 def run_epoch(model, optim, train_dataloader, val_dataloader, grad_clip=10.0):
