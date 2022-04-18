@@ -14,9 +14,10 @@
 #SBATCH --error=/homes/spoendli/slurm_%j.out # Writes error messages to this file. %j is jobnumber
 
 
-source /data/localhost/not-backed-up/scratch/chinery/miniconda3/etc/profile.d/conda.sh
+source /homes/spoendli/miniconda3/etc/profile.d/conda.sh
 conda activate ab
 
 cd /homes/spoendli/ABlooper/
-git pull
+git pull ABlooper main
+pip install .
 python -u train_model.py > train_1804.out
