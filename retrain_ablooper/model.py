@@ -183,29 +183,29 @@ class MaskDecoyGen(torch.nn.Module):
         return geoms
 
 # model to use with pytorch lightning
-class pl_EGNNModel(pytorch_lightning.LightningModule):
-    def __init__(self):
-        super().__init__()
-        self.egnnmodel = MaskDecoyGen()
-
-    def forward(self, node_encodings, coordinates, mask):
-
-        return self.egnnmodel(node_encodings, coordinates, mask)   
-
-    def configure_optimizers(self):
-        optimizer = torch.optim.RAdam(model.parameters(), lr=1e-3, weight_decay=1e-3)
-        return optimizer
-
-    def training_step(self, batch, batch_idx):
-        predicted_coordinates = self(batch['encodings'], batch['geomins'], batch['mask'])  
-        loss = rmsd(batch['geomouts'], predicted_coordinates)
-        return loss
-
-    def validation_step(self, batch, batch_idx): 
-        predicted_coordinates = self(batch['encodings'], batch['geomins'], batch['mask'])
-        loss = rmsd(batch['geomouts'],  predicted_coordinates)
-        return loss
-
-    def validation_epoch_end(self, val_step_outputs): # Updated once when validation is called
-        val_loss = torch.stack(val_step_outputs).detach().cpu().numpy().mean()
-        self.logger.experiment['evaluation/val_loss'].log(val_loss)
+# class pl_EGNNModel(pytorch_lightning.LightningModule):
+#     def __init__(self):
+#         super().__init__()
+#         self.egnnmodel = MaskDecoyGen()
+# 
+#     def forward(self, node_encodings, coordinates, mask):
+# 
+#         return self.egnnmodel(node_encodings, coordinates, mask)   
+# 
+#     def configure_optimizers(self):
+#         optimizer = torch.optim.RAdam(model.parameters(), lr=1e-3, weight_decay=1e-3)
+#         return optimizer
+# 
+#     def training_step(self, batch, batch_idx):
+#         predicted_coordinates = self(batch['encodings'], batch['geomins'], batch['mask'])  
+#         loss = rmsd(batch['geomouts'], predicted_coordinates)
+#         return loss
+# 
+#     def validation_step(self, batch, batch_idx): 
+#         predicted_coordinates = self(batch['encodings'], batch['geomins'], batch['mask'])
+#         loss = rmsd(batch['geomouts'],  predicted_coordinates)
+#         return loss
+# 
+#     def validation_epoch_end(self, val_step_outputs): # Updated once when validation is called
+#         val_loss = torch.stack(val_step_outputs).detach().cpu().numpy().mean()
+#         self.logger.experiment['evaluation/val_loss'].log(val_loss)
