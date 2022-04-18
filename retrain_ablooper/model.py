@@ -169,7 +169,7 @@ class MaskDecoyGen(torch.nn.Module):
     '''
     5 EGNN models run in parallel.
     '''
-    def __init__(self, dims_in=41, decoys=1, **kwargs):
+    def __init__(self, dims_in=41, decoys=5, **kwargs):
         super().__init__()
         self.blocks = torch.nn.ModuleList([MaskEGNNModel(node_dim=dims_in, **kwargs) for _ in range(decoys)])
         self.decoys = decoys

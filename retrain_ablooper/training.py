@@ -49,7 +49,7 @@ def mask_run_epoch(model, optim, train_dataloader, val_dataloader, decoys=5, gra
     Function to train model for a single epoch with mask
     '''
     CDRs = ['H1', 'H2', 'H3', 'L1', 'L2', 'L3']
-    cdr_rmsds = torch.zeros(decoys, 100, len(CDRs))
+    cdr_rmsds = torch.zeros(100, len(CDRs))
 
     epoch_train_losses = []
     epoch_val_losses = []
@@ -76,9 +76,9 @@ def mask_run_epoch(model, optim, train_dataloader, val_dataloader, decoys=5, gra
             loss = rmsd(geomouts, pred)
             epoch_val_losses.append(loss.item())
 
-            cdr_rmsds[:,i,:] = rmsd_per_cdr(pred, node_features, geomouts, CDRs, decoys)
+            cdr_rmsds[i,:] = rmsd_per_cdr(pred, node_features, geomouts, CDRs, decoys)
     
-    return np.mean(epoch_train_losses), np.mean(epoch_val_losses), cdr_rmsds.mean(1)
+    return np.mean(epoch_train_losses), np.mean(epoch_val_losses), cdr_rmsds.mean(0)
 
 def train_model(model, optimiser, train_dataloader, val_dataloader, n_epochs=5000, patience=150, decoys=5):
     '''

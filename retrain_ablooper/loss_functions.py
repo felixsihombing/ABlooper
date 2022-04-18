@@ -49,7 +49,6 @@ def atom_dist_penal(geom, pred):
     return (true_ds-pred_ds)[mask].pow(2).mean()
 
 # functions to get rmsds for each cdr individually
-# not sure if these work with batching
 def loop_resi_index(node_features, loop):
     '''Returns the indices of node features that belong to the specified cdr'''
 
@@ -78,20 +77,22 @@ def loop_resi_coords(coordinates, node_features, loop):
     '''    
     resi = torch.zeros_like(coordinates).to(device)
     resi[:,:,:] = torch.nan
+    index = loop_resi_index(node_features[0], loop)
     for decoy in range(len(resi)):
-        index = loop_resi_index(node_features[decoy], loop)
         for i in index:
             resi[decoy,i,:] = coordinates[decoy,i,:]
+
     return resi
 
 def rmsd_per_cdr(pred, node_features, out_coordinates, CDRs, decoys):
     '''
     Calculates the rmsd for a list of CDRs.
     '''
-    cdr_rmsd = torch.zeros(decoys, 1, len(CDRs)).to(device)
+    cdr_rmsd = torch.zeros(len(CDRs)).to(device)
+
     for j in range(len(CDRs)):
         pred_cdr = loop_resi_coords(pred, node_features, CDRs[j])
         true_cdr = loop_resi_coords(out_coordinates, node_features, CDRs[j])
-        cdr_rmsd[:, 0, j] = rmsd(pred_cdr, true_cdr)
+        cdr_rmsd[j] = rmsd(pred_cdr, true_cdr)
 
     return cdr_rmsd
