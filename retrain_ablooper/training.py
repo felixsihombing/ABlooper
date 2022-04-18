@@ -115,7 +115,7 @@ def train_model(model, optimiser, train_dataloader, val_dataloader, n_epochs=500
         with open('training_loss.json', 'w') as f:
             dic = {'train_losses': train_losses,
                    'val_lossers': val_losses,
-                   'cdr_rmsd': cdr_rmsds)}
+                   'cdr_rmsd': cdr_rmsds}
             json.dump(dic, f)
 
 
