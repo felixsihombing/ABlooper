@@ -92,9 +92,9 @@ def train_model(model, optimiser, train_dataloader, val_dataloader, n_epochs=500
     for epoch in track(range(n_epochs), description='Train model'):
         train_loss, val_loss, cdr_rmsd = mask_run_epoch(model, optimiser, train_dataloader, val_dataloader, decoys=decoys)  # Run one epoch and get train and validation loss
 
-        train_losses.append(train_loss)                                                    # Store train and validation loss
-        val_losses.append(val_loss)
-        cdr_rmsds.append(cdr_rmsd)
+        train_losses.append(train_loss.tolist())                                                    # Store train and validation loss
+        val_losses.append(val_loss.tolist())
+        cdr_rmsds.append(cdr_rmsd.tolist())
 
         if np.min(val_losses) == val_loss:                                                 # If it is the best model on the validation set, save it
             torch.save(model.state_dict(), "best_model")                                   # This is how you save models in pytorch
@@ -115,7 +115,7 @@ def train_model(model, optimiser, train_dataloader, val_dataloader, n_epochs=500
         with open('training_loss.json', 'w') as f:
             dic = {'train_losses': train_losses,
                    'val_lossers': val_losses,
-                   'cdr_rmsd': cdr_rmsds}
+                   'cdr_rmsd': cdr_rmsds)}
             json.dump(dic, f)
 
 
