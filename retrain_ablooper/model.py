@@ -3,8 +3,8 @@ uses a mask to allow batching and one without.'''
 
 import torch
 from einops import rearrange
-import pytorch_lightning
-from pytorch_lightning.loggers.neptune import NeptuneLogger
+# import pytorch_lightning
+# from pytorch_lightning.loggers.neptune import NeptuneLogger
 
 class EGNN(torch.nn.Module):
     '''

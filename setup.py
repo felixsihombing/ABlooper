@@ -14,5 +14,6 @@ setup(
         'torch>=1.6',
         'rich',
         'pandas',
+        'scikit-learn',
     ],
 )
