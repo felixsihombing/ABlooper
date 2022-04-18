@@ -1,7 +1,7 @@
 '''Functions for data preparation. Exctract CDR sequences and backbone coordinates 
 from SabDab and reformat them to the model inputs'''
 
-from ABDB import database as db
+# from ABDB import database as db
 import numpy as np
 from rich.progress import track
 import copy
@@ -277,8 +277,8 @@ def prepare_model_input(CDR_seq, CDR_BB_coord):
     encodings = np.concatenate(encodings, axis=0)
     geomins = np.concatenate(geomins, axis=0)
     # format to tensor
-    encodings = torch.from_numpy(encodings).to(device)
-    geomins = torch.from_numpy(geomins).to(device)
+    encodings = torch.from_numpy(encodings)
+    geomins = torch.from_numpy(geomins)
     # rearrange tensors that atoms in one residue are nolonger grouped
     encodings = rearrange(encodings, "i a d -> (i a) d")
     geomins = rearrange(geomins, "i a d -> (i a) d")
@@ -312,7 +312,7 @@ def prepare_model_output(CDR_BB_coords):
         # concatenate geoms into single array
         geomout = np.concatenate(geomout, axis=0)
         # format to tensor
-        geomout = torch.from_numpy(geomout).to(device)
+        geomout = torch.from_numpy(geomout)
         # rearrange tensor
         geomout = rearrange(geomout, "i a d -> (i a) d")
 
@@ -341,7 +341,7 @@ def create_mask(node_encodings, mask_lenght=504):
     '''
     masks = []
     for node_encoding in node_encodings:
-        mask = torch.zeros((mask_lenght), device=device)
+        mask = torch.zeros((mask_lenght))
         mask[:len(node_encoding)] = 1
         masks.append(mask)
 
@@ -353,7 +353,7 @@ def pad_tensor(tensor, out_lenght=504):
     Pads all tensors with 0 to the same number of nodes
     '''
     ndim = tensor.shape[1]
-    outtensor = torch.zeros((out_lenght, ndim), device=device)
+    outtensor = torch.zeros((out_lenght, ndim))
     outtensor[:tensor.shape[0], :] = tensor
     return outtensor
 

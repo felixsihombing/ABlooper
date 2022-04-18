@@ -3,6 +3,9 @@
 from einops import rearrange
 import torch
 
+device = "cuda" if torch.cuda.is_available() else "cpu"
+torch.set_default_dtype(torch.float)
+
 
 # set loss functions
 def rmsd(prediction, truth):
@@ -73,7 +76,7 @@ def loop_resi_coords(coordinates, node_features, loop):
     '''
     Returns the coordinates of atoms belonging to a specified loop.
     '''    
-    resi = torch.zeros_like(coordinates)
+    resi = torch.zeros_like(coordinates).to(device)
     resi[:,:,:] = torch.nan
     for decoy in range(len(resi)):
         index = loop_resi_index(node_features[decoy], loop)
@@ -85,7 +88,7 @@ def rmsd_per_cdr(pred, node_features, out_coordinates, CDRs, decoys):
     '''
     Calculates the rmsd for a list of CDRs.
     '''
-    cdr_rmsd = torch.zeros(decoys, 1, len(CDRs))
+    cdr_rmsd = torch.zeros(decoys, 1, len(CDRs)).to(device)
     for j in range(len(CDRs)):
         pred_cdr = loop_resi_coords(pred, node_features, CDRs[j])
         true_cdr = loop_resi_coords(out_coordinates, node_features, CDRs[j])

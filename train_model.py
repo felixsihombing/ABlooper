@@ -9,6 +9,7 @@ import pandas as pd
 from retrain_ablooper import *
 
 
+
 # import data
 with open('train_data/CDR_BB_coords.npy', 'rb') as infile:
     CDR_BB_coords = np.load(infile, allow_pickle=True)
@@ -58,23 +59,24 @@ train, validation = train_test_split(data, test_size=100, random_state=42)
 print(f'Size train set: {len(train)}, val set: {len(validation)}, test set: {len(test)}')
 
 batch_size = 1
+num_workers = 1
 train_dataloader = torch.utils.data.DataLoader(train, 
                                                batch_size=batch_size,   # Batch size
-                                               num_workers=1,           # Number of cpu's allocated to load the data (recommended is 4/GPU)
+                                               num_workers=num_workers,           # Number of cpu's allocated to load the data (recommended is 4/GPU)
                                                shuffle=True,            # Whether to randomly shuffle data
                                                pin_memory=True,         # Enables faster data transfer to CUDA-enabled GPUs (page-locked memory)
                                                )
 
 val_dataloader = torch.utils.data.DataLoader(validation, 
                                              batch_size=batch_size,
-                                             num_workers=1,
+                                             num_workers=num_workers,
                                              shuffle=True,
                                              pin_memory=True,
                                              )
 
 test_dataloader = torch.utils.data.DataLoader(test, 
                                               batch_size=batch_size,
-                                              num_workers=1,
+                                              num_workers=num_workers,
                                               shuffle=True,
                                               pin_memory=True,
                                               )

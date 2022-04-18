@@ -7,6 +7,10 @@ import json
 from rich.progress import track
 from retrain_ablooper import *
 
+# torch settings
+device = "cuda" if torch.cuda.is_available() else "cpu"
+torch.set_default_dtype(torch.float)
+
 # train for one epoch
 def run_epoch(model, optim, train_dataloader, val_dataloader, grad_clip=10.0):
     '''
@@ -52,7 +56,7 @@ def mask_run_epoch(model, optim, train_dataloader, val_dataloader, decoys=5, gra
     model.train()                                                      # Set the model to train mode (Should't matter here as we don't have dropout, but good practice to keep in)
 
     for i,data in enumerate(train_dataloader):                         # For each batch of data in the dataset
-        coordinates, geomouts, node_features, mask = data['geomins'].float(), data['geomouts'].float(), data['encodings'].float(), data['mask'].float()
+        coordinates, geomouts, node_features, mask = data['geomins'].float().to(device), data['geomouts'].float().to(device), data['encodings'].float().to(device), data['mask'].float().to(device)
 
         pred = model(node_features, coordinates, mask)
         optim.zero_grad()                                              # Delete old gradients
@@ -67,12 +71,11 @@ def mask_run_epoch(model, optim, train_dataloader, val_dataloader, decoys=5, gra
     with torch.no_grad():                                              # Calculate loss funtion for validation set
         model.eval()                                                   # Set the model to eval mode
         for i, data in enumerate(val_dataloader):
-            coordinates, geomouts, node_features, mask = data['geomins'].float(), data['geomouts'].float(), data['encodings'].float(), data['mask'].float()
+            coordinates, geomouts, node_features, mask = data['geomins'].float().to(device), data['geomouts'].float().to(device), data['encodings'].float().to(device), data['mask'].float().to(device)
             pred = model(node_features, coordinates, mask)
             loss = rmsd(geomouts, pred)
             epoch_val_losses.append(loss.item())
 
-            pred = model(node_features, coordinates, mask)
             cdr_rmsds[:,i,:] = rmsd_per_cdr(pred, node_features, geomouts, CDRs, decoys)
     
     return np.mean(epoch_train_losses), np.mean(epoch_val_losses), cdr_rmsds.mean(1)
