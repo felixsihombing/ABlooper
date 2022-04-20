@@ -76,7 +76,7 @@ train, validation = train_test_split(data, test_size=100, random_state=42)
 
 print(f'Size train set: {len(train)}, val set: {len(validation)}, test set: {len(test)}')
 
-batch_size = 4
+batch_size = 1
 num_workers = 1
 train_dataloader = torch.utils.data.DataLoader(train, 
                                                batch_size=batch_size,   # Batch size
