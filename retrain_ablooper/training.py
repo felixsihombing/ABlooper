@@ -105,13 +105,15 @@ def train_model(model, optimiser, train_dataloader, val_dataloader, training_nam
             epochs_without_improvement += 1
         else:                                                                              # If the model hasn't improved in 'patience' epochs stop the training.
             break
-
+        
+        previous_weigths_name = "previous_wieghts" + training_name
+        previous_optim_name = "previous_wieghts" + training_name
         if train_loss > 1.5*np.min(train_losses):                                          # EGNNs are quite unstable, this reverts the model to a previous state if an epoch blows up
-            model.load_state_dict(torch.load("previous_weights", map_location=torch.device(device)))
-            optimiser.load_state_dict(torch.load("previous_optim", map_location=torch.device(device)))
+            model.load_state_dict(torch.load(previous_weigths_name, map_location=torch.device(device)))
+            optimiser.load_state_dict(torch.load(previous_optim_name, map_location=torch.device(device)))
         if train_loss == np.min(train_losses):
-            torch.save(model.state_dict(), "previous_weights")        
-            torch.save(optimiser.state_dict(), "previous_optim")
+            torch.save(model.state_dict(), previous_weigths_name)        
+            torch.save(optimiser.state_dict(), previous_optim_name)
 
         losses_file = "training_loss" + training_name + ".json" 
         with open(losses_file, 'w') as f:
