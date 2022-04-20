@@ -1,6 +1,7 @@
 '''Functions for data preparation. Exctract CDR sequences and backbone coordinates 
 from SabDab and reformat them to the model inputs'''
 
+from re import A
 # from ABDB import database as db
 import numpy as np
 from rich.progress import track
@@ -27,16 +28,36 @@ for ind in range(0, 20):
     short2num[aa1[ind]] = ind
 
 # functions to filter entries in SAbDAb
-def filter_abs(pdb_list):
+def filter_for_resolution(pdb_list, resolution_cutoff=3.0):
+    '''
+    filters a list of pdb ids for structures with a resolution better than the cut-off (default 3A).
+    Returns a list of filtered pdb ids.
+    '''
+    filtered_list = []
+
+    for pdb in track(pdb_list, description='Filter PDBs for resolution'):
+        resolution = db.fetch(pdb).get_resolution()
+
+        try: # some resolutions are 'NOT' and can't be converted to float, exclude these
+            resolution = float(resolution)
+            if resolution < resolution_cutoff:
+                filtered_list.append(pdb)
+        except ValueError:
+            continue
+
+    n = len(pdb_list) - len(filtered_list)
+    print(f'Number of PDBs with resolution worse than {resolution_cutoff}: {n}\n')
+
+    return filtered_list
+
+def filter_missing_chain_chain_names(pdb_list):
     '''
     Filter a list of PDB ids obtained from SAbDab and removes FABS where one of the chains is missing or where
     heavy and light chains have the same name.
     '''
     filtered_list = []
-    i = 0
     
-    for pdb in track(pdb_list, description='Filter FABs'):
-        i += 1
+    for pdb in track(pdb_list, description='Filter PDBs for missing chains and identical chain names'):
         fab = db.fetch(pdb).fabs[0]
 
         if fab.VH == fab.VL:
@@ -45,8 +66,40 @@ def filter_abs(pdb_list):
             continue
         else:
             filtered_list.append(pdb)
+        
+    n = len(pdb_list) - len(filtered_list)
+    print(f'Number of PDBs with missing chains or identical chain names: {n}\n')
 
     return filtered_list
+
+# not sure if this way only filters for missing backbone atoms
+# def filter_missing_residues(fab):
+#     '''
+#     Retruns false if the fab is missing a backbone residue in the CDR.
+#     '''
+#     missing_res = fab.get_missing_residues()
+#     chains = ['H', 'L']
+#     for chain in chains:
+#         for i in range(len(missing_res['chain'])):
+#             r = float(missing_res['chain'][i][0])
+# 
+#             if 27 <= r and r <= 38: # in CDR1
+#                 return False
+#             elif 56 <= r and r <= 65: # in CDR2
+#                 return False
+#             elif 105 <= r and r <= 117: # in CDR3
+#                 return False
+#     
+#     return True
+
+def filter_abs(pdb_list):
+    '''
+    Filters a list of pdbs.
+    '''
+    pdb_list = filter_missing_chain_chain_names(pdb_list)
+    pdb_list = filter_for_resolution(pdb_list)
+
+    return pdb_list
 
 # functions to extract and format relevant data from a SAbDab FAB. Given a FAB two dictionaries are returned for CDR and anchor 
 # sequences and thier backbone coordinates
@@ -81,9 +134,9 @@ def get_slice(ab_regions, CDR):
     chain = CDR[0].lower()
     loop = CDR[1]
 
-    slice = ab_regions['fw' + chain + loop][-2:]
-    slice += ab_regions['cdr' + chain + loop]
-    slice += ab_regions['fw' + chain + str(int(loop) + 1 )][:2]
+    slice = ab_regions['fw' + chain + loop][-2:] # last two residues of previous framework
+    slice += ab_regions['cdr' + chain + loop] # loop
+    slice += ab_regions['fw' + chain + str(int(loop) + 1 )][:2] # first two of next framework
 
     return slice
 
@@ -179,6 +232,115 @@ def get_sabdab_fabs(pdb_list):
                 pass
 
     return CDR_seqs, CDR_BB_coords
+
+# functions to filter fabs
+def filter_CDR_length(CDR_seqs, CDR_BB_coords, length_cutoff=20):
+    '''
+    Removes all entries from CDR_seqs and CDR_BB_coords if their longest CDR is longer than 20 residues.
+    '''
+    filtered_CDR_seqs = []
+    filtered_BB_coords = []
+    for i in range(len(CDR_seqs)):
+        H1 = len(CDR_seqs[i]['H1'])
+        H2 = len(CDR_seqs[i]['H2'])
+        H3 = len(CDR_seqs[i]['H3'])
+
+        L1 = len(CDR_seqs[i]['L1'])
+        L2 = len(CDR_seqs[i]['L2'])
+        L3 = len(CDR_seqs[i]['L3'])
+
+        longest = max([H1, H2, H3, L1, L2, L3]) # filtering on max or H3 length does not make a difference 
+
+        if longest <= (length_cutoff + 4): # two anchors on each side
+            filtered_CDR_seqs.append(CDR_seqs[i])
+            filtered_BB_coords.append(CDR_BB_coords[i])
+
+    print(f'N fabs before filter: {len(CDR_seqs)}, n fabs after filter: {len(filtered_CDR_seqs)}')
+    
+    return filtered_CDR_seqs, filtered_BB_coords
+
+def get_CDR_sequence(CDR_seq):
+    '''
+    Returns concatenated list of sequences of all CDRs in a fab.
+    '''
+    seq = []
+    for _, values in CDR_seq.items():
+        seq += values[2:-2]
+
+    return seq
+    
+def remove_test_set_identities(CDR_seqs, CDR_BB_coords, CDR_seqs_test):
+    '''
+    Removes all fabs from train/val set with 100% CDR sequence identity then a sequence in the test set.
+    '''
+    # list of all sequences in test set
+    test_set_seqs = []
+    for CDR_seq_test in CDR_seqs_test:
+        test_set_seqs.append(get_CDR_sequence(CDR_seq_test))
+
+    filtered_CDR_seqs = []
+    filtered_BB_coords = []
+    for i in range(len(CDR_seqs)):
+        cdr_seq = get_CDR_sequence(CDR_seqs[i])
+
+        if cdr_seq not in test_set_seqs:
+            filtered_CDR_seqs.append(CDR_seqs[i])
+            filtered_BB_coords.append(CDR_BB_coords[i])
+
+    print(f'N fabs before filter: {len(CDR_seqs)}, n fabs after filter: {len(filtered_CDR_seqs)}')
+    
+    return filtered_CDR_seqs, filtered_BB_coords
+
+def dist(x1,x2):
+    return np.sqrt(((x1-x2)**2).sum(-1))
+
+def calcualte_BB_atom_distances(CDR_seq, CDR_BB_coord):
+    '''
+    Calculates the distances between consecutive backbone atoms
+    '''
+    CA_CA_distance = []
+    CA_N_distance = []
+    CA_C_distance = []
+    C_N_distance = []
+    CA_CB_distance = []
+
+    for CDR in CDR_BB_coord:
+        geom = CDR_BB_coord[CDR]
+        seq = CDR_seq[CDR]
+        # CA-CA
+        CA_CA_distance += dist(geom[1:,0],geom[:-1,0]).tolist()
+        # CA-N
+        CA_N_distance += dist(geom[:,0],geom[:,1]).tolist()
+        # CA-C
+        CA_C_distance += dist(geom[:,0],geom[:,2]).tolist()
+        # C-N
+        C_N_distance += dist(geom[1:,2],geom[:-1,1]).tolist()
+        # CA-CB
+        GLY_mask = [x in "G" for x in seq]
+        CA_CB_distance += dist(geom[GLY_mask,0],geom[GLY_mask,3]).tolist()
+
+    return CA_CA_distance, CA_N_distance, CA_C_distance, C_N_distance, CA_CB_distance
+
+def filter_CA_distance(CDR_seqs, CDR_BB_coords):
+    '''
+    Filters CDR_seqs and BB_coords for fabs which have a CA distance outside of a provided interval.
+    This should remove all fabs with missing residues.
+    '''
+    filtered_CDR_seqs = []
+    filtered_BB_coords = []
+
+    for i in range(len(CDR_seqs)):
+        CA_CA_distance, _, _, _, _ = calcualte_BB_atom_distances(CDR_seqs[i], CDR_BB_coords[i])
+        max_dist = max(CA_CA_distance)
+        min_dist = min(CA_CA_distance)
+
+        if 2.8 <= min_dist and max_dist <= 4.8:
+            filtered_CDR_seqs.append(CDR_seqs[i])
+            filtered_BB_coords.append(CDR_BB_coords[i])
+
+    print(f'N fabs before filter: {len(CDR_seqs)}, n fabs after filter: {len(filtered_CDR_seqs)}')
+    
+    return filtered_CDR_seqs, filtered_BB_coords
 
 # functions that convert data extracted from SAbDab to model input
 def encode(x, classes):

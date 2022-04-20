@@ -1,5 +1,4 @@
 *.pdb
-train_data/
 figures/
 retrain_ablooper/__pycache__/
 retrain_ablooper.egg-info
