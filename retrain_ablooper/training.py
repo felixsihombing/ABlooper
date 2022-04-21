@@ -123,6 +123,6 @@ def train_model(model, optimiser, train_dataloader, val_dataloader, training_nam
             json.dump(dic, f)
 
 
-        print("{:6.2f} | {:6.2f}".format(train_loss, train_loss))
+        print("{:6.2f} | {:6.2f}".format(train_loss, val_loss))
     
     return train_losses, val_losses
