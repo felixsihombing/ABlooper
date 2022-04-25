@@ -76,7 +76,7 @@ def mask_run_epoch(model, optim, train_dataloader, val_dataloader, decoys=5, gra
             loss = rmsd(geomouts, pred)
             epoch_val_losses.append(loss.item())
 
-            cdr_rmsds[i,:] = rmsd_per_cdr(pred, node_features, geomouts, CDRs, decoys)
+            cdr_rmsds[i,:] = rmsd_per_cdr(pred, node_features, geomouts, CDRs) # first average the coordinates from all decoys then calculate RMSDs
     
     return np.mean(epoch_train_losses), np.mean(epoch_val_losses), cdr_rmsds.mean(0)
 
@@ -97,7 +97,7 @@ def train_model(model, optimiser, train_dataloader, val_dataloader, training_nam
         cdr_rmsds.append(cdr_rmsd.tolist())
 
         if np.min(val_losses) == val_loss:                                                 # If it is the best model on the validation set, save it
-            best_model_name = "best_model" + training_name
+            best_model_name = "best_models/best_model" + training_name
             torch.save(model.state_dict(), best_model_name)                                   # This is how you save models in pytorch
             epochs_without_improvement = 0
 
@@ -106,8 +106,8 @@ def train_model(model, optimiser, train_dataloader, val_dataloader, training_nam
         else:                                                                              # If the model hasn't improved in 'patience' epochs stop the training.
             break
         
-        previous_weigths_name = "previous_wieghts" + training_name
-        previous_optim_name = "previous_optim" + training_name
+        previous_weigths_name = "previous/previous_wieghts" + training_name
+        previous_optim_name = "previous/previous_optim" + training_name
         if train_loss > 1.5*np.min(train_losses):                                          # EGNNs are quite unstable, this reverts the model to a previous state if an epoch blows up
             model.load_state_dict(torch.load(previous_weigths_name, map_location=torch.device(device)))
             optimiser.load_state_dict(torch.load(previous_optim_name, map_location=torch.device(device)))
@@ -115,7 +115,7 @@ def train_model(model, optimiser, train_dataloader, val_dataloader, training_nam
             torch.save(model.state_dict(), previous_weigths_name)        
             torch.save(optimiser.state_dict(), previous_optim_name)
 
-        losses_file = "training_loss" + training_name + ".json" 
+        losses_file = "losses/training_loss" + training_name + ".json" 
         with open(losses_file, 'w') as f:
             dic = {'train_losses': train_losses,
                    'val_lossers': val_losses,

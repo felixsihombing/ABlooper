@@ -76,23 +76,25 @@ def loop_resi_coords(coordinates, node_features, loop):
     Returns the coordinates of atoms belonging to a specified loop.
     '''    
     resi = torch.zeros_like(coordinates).to(device)
-    resi[:,:,:] = torch.nan
+    resi[:,:] = torch.nan
     index = loop_resi_index(node_features[0], loop)
-    for decoy in range(len(resi)):
-        for i in index:
-            resi[decoy,i,:] = coordinates[decoy,i,:]
+
+    for i in index:
+        resi[i,:] = coordinates[i,:]
 
     return resi
 
-def rmsd_per_cdr(pred, node_features, out_coordinates, CDRs, decoys):
+def rmsd_per_cdr(pred, node_features, out_coordinates, CDRs):
     '''
     Calculates the rmsd for a list of CDRs.
     '''
     cdr_rmsd = torch.zeros(len(CDRs)).to(device)
+    pred_mean = pred.mean(0) # mean prediction of all decoys 
+    out_coords_mean = out_coordinates.mean(0)
 
     for j in range(len(CDRs)):
-        pred_cdr = loop_resi_coords(pred, node_features, CDRs[j])
-        true_cdr = loop_resi_coords(out_coordinates, node_features, CDRs[j])
+        pred_cdr = loop_resi_coords(pred_mean, node_features, CDRs[j])
+        true_cdr = loop_resi_coords(out_coords_mean, node_features, CDRs[j])
         cdr_rmsd[j] = rmsd(pred_cdr, true_cdr)
 
-    return cdr_rmsd
+    return cdr_rmsd 
