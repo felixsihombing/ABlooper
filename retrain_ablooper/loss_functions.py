@@ -10,7 +10,7 @@ torch.set_default_dtype(torch.float)
 # set loss functions
 def rmsd(prediction, truth):
     dists = (prediction - truth).pow(2).sum(-1)
-    return torch.sqrt(dists.nanmean(-1)).nanmean()
+    return torch.sqrt(dists.nanmean(-1)).mean()
 
 def rmsds(preds, true):
     return  torch.sort((preds - true).pow(2).sum(-1).mean(-1).pow(1/2))[0]
@@ -50,8 +50,9 @@ def atom_dist_penal(geom, pred):
 
 # functions to get rmsds for each cdr individually
 def loop_resi_index(node_features, loop):
-    '''Returns the indices of node features that belong to the specified cdr'''
-
+    '''
+    Returns the indices of node features that belong to the specified cdr
+    '''
     loop2num = {'H1': 0,
                 'H2': 1,
                 'H3': 2,
@@ -62,39 +63,42 @@ def loop_resi_index(node_features, loop):
                 }
     
     index = loop2num[loop]
-    loop_resi_index = []
-    loop_encodings = node_features[:, 30:37] # elements 30:37 correspond to loop encodings
+    loop_resi_indices = []
+    loop_encodings = node_features[:, :, 30:37] # elements 30:37 correspond to loop encodings
 
-    for i in range(len(loop_encodings)):
-        if loop_encodings[i][index] == 1:
-            loop_resi_index.append(i)
+    for i in range(len(loop_encodings)): # loop through batches
+        loop_resi_index = []
+        for j in range(len(loop_encodings[i])): # loop through nodes
+            if loop_encodings[i, j, index] == 1:
+                loop_resi_index.append(j)
+        loop_resi_indices.append(loop_resi_index)
     
-    return loop_resi_index
+    return loop_resi_indices # output of size batch x residues in cdr
 
 def loop_resi_coords(coordinates, node_features, loop):
     '''
     Returns the coordinates of atoms belonging to a specified loop.
     '''    
     resi = torch.zeros_like(coordinates).to(device)
-    resi[:,:] = torch.nan
-    index = loop_resi_index(node_features[0], loop)
+    resi[:,:,:] = torch.nan
+    indices = loop_resi_index(node_features, loop)
 
-    for i in index:
-        resi[i,:] = coordinates[i,:]
+    for index in indices: # loop through batches
+        for i in index: # loop through indices in each batch
+            resi[index,i,:] = coordinates[index,i,:]
 
-    return resi
+    return resi # output of size batch x 504 x 3
 
 def rmsd_per_cdr(pred, node_features, out_coordinates, CDRs):
     '''
     Calculates the rmsd for a list of CDRs.
     '''
     cdr_rmsd = torch.zeros(len(CDRs)).to(device)
-    pred_mean = pred.mean(0) # mean prediction of all decoys 
-    out_coords_mean = out_coordinates.mean(0)
+    pred_mean = pred.mean(0) # mean prediction of all decoys in each batch 
 
     for j in range(len(CDRs)):
         pred_cdr = loop_resi_coords(pred_mean, node_features, CDRs[j])
-        true_cdr = loop_resi_coords(out_coords_mean, node_features, CDRs[j])
+        true_cdr = loop_resi_coords(out_coordinates, node_features, CDRs[j])
         cdr_rmsd[j] = rmsd(pred_cdr, true_cdr)
 
-    return cdr_rmsd 
+    return cdr_rmsd # output of size 6
