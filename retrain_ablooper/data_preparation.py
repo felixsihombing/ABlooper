@@ -21,11 +21,13 @@ aa3 = ["ALA", "CYS", "ASP", "GLU", "PHE", "GLY", "HIS", "ILE", "LYS", "LEU", "ME
 short2long = {}
 long2short = {}
 short2num = {}
+num2short = {}
 
 for ind in range(0, 20):
     long2short[aa3[ind]] = aa1[ind]
     short2long[aa1[ind]] = aa3[ind]
     short2num[aa1[ind]] = ind
+    num2short[ind] = aa1[ind]
 
 # functions to filter entries in SAbDAb
 def filter_for_resolution(pdb_list, resolution_cutoff=3.0):

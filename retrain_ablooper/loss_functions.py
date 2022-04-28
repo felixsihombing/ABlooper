@@ -83,9 +83,9 @@ def loop_resi_coords(coordinates, node_features, loop):
     resi[:,:,:] = torch.nan
     indices = loop_resi_index(node_features, loop)
 
-    for index in indices: # loop through batches
-        for i in index: # loop through indices in each batch
-            resi[index,i,:] = coordinates[index,i,:]
+    for j in range(len(indices)): # loop through batches
+        for i in indices[j]: # loop through indices in each batch
+            resi[j,i,:] = coordinates[j,i,:]
 
     return resi # output of size batch x 504 x 3
 

@@ -3,3 +3,5 @@ figures/
 retrain_ablooper/__pycache__/
 retrain_ablooper.egg-info
 build
+pdbs/
+train_data/*.pt

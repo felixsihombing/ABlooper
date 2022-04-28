@@ -93,3 +93,111 @@ def train_model(model, optimiser, train_dataloader, val_dataloader, training_nam
         print("{:6.2f} | {:6.2f}".format(train_loss, val_loss))
     
     return train_losses, val_losses
+
+# train model with one optimiser and if it doesn't improve for 30 epochs switch to another
+def train_model_2optim(model, optimiser1, optimiser2, train_dataloader, val_dataloader, training_name='', n_epochs=5000, patience=150, decoys=5):
+    '''
+    Runs run_epoch function a specified number of times and keeps track of loss.
+    '''
+    train_losses = []
+    val_losses = []
+    cdr_rmsds = []
+
+    # start with first optimiser
+    optimiser = optimiser1
+    print('Start with 1st optimiser')
+
+    print(" Train |  Val ")
+    for epoch in track(range(n_epochs), description='Train model'):
+        train_loss, val_loss, cdr_rmsd = mask_run_epoch(model, optimiser, train_dataloader, val_dataloader, decoys=decoys)  # Run one epoch and get train and validation loss
+
+        train_losses.append(train_loss.tolist())                                                    # Store train and validation loss
+        val_losses.append(val_loss.tolist())
+        cdr_rmsds.append(cdr_rmsd.tolist())
+
+        if np.min(val_losses) == val_loss:                                                 # If it is the best model on the validation set, save it
+            best_model_name = "best_models/best_model" + training_name
+            torch.save(model.state_dict(), best_model_name)                                   # This is how you save models in pytorch
+            epochs_without_improvement = 0
+
+        elif epochs_without_improvement < patience:                                        # If the model hasn't improved this epoch store that
+            epochs_without_improvement += 1
+        else:                                                                              # If the model hasn't improved in 'patience' epochs stop the training.
+            break
+        
+        # change optimiser after 30 epochs without imporvement
+        if epochs_without_improvement == 30:
+            optimiser = optimiser2
+            print('Switched to 2nd optimiser')
+        
+        previous_weigths_name = "previous/previous_wieghts" + training_name
+        previous_optim_name = "previous/previous_optim" + training_name
+        if train_loss > 1.5*np.min(train_losses):                                          # EGNNs are quite unstable, this reverts the model to a previous state if an epoch blows up
+            model.load_state_dict(torch.load(previous_weigths_name, map_location=torch.device(device)))
+            optimiser.load_state_dict(torch.load(previous_optim_name, map_location=torch.device(device)))
+        if train_loss == np.min(train_losses):
+            torch.save(model.state_dict(), previous_weigths_name)        
+            torch.save(optimiser.state_dict(), previous_optim_name)
+
+        losses_file = "losses/training_loss" + training_name + ".json" 
+        with open(losses_file, 'w') as f:
+            dic = {'train_losses': train_losses,
+                   'val_lossers': val_losses,
+                   'cdr_rmsd': cdr_rmsds}
+            json.dump(dic, f)
+
+
+        print("{:6.2f} | {:6.2f}".format(train_loss, val_loss))
+    
+    return train_losses, val_losses
+
+# train model with learning rate scheduler
+def train_model_lrsched(model, optimiser, lr_sched, train_dataloader, val_dataloader, training_name='', n_epochs=5000, patience=150, decoys=5):
+    '''
+    Runs run_epoch function a specified number of times and keeps track of loss.
+    '''
+    train_losses = []
+    val_losses = []
+    cdr_rmsds = []
+
+    print(" Train |  Val ")
+    for epoch in track(range(n_epochs), description='Train model'):
+        train_loss, val_loss, cdr_rmsd = mask_run_epoch(model, optimiser, train_dataloader, val_dataloader, decoys=decoys)  # Run one epoch and get train and validation loss
+
+        # update learning rate
+        lr_sched.step()
+
+        train_losses.append(train_loss.tolist())                                                    # Store train and validation loss
+        val_losses.append(val_loss.tolist())
+        cdr_rmsds.append(cdr_rmsd.tolist())
+
+        if np.min(val_losses) == val_loss:                                                 # If it is the best model on the validation set, save it
+            best_model_name = "best_models/best_model" + training_name
+            torch.save(model.state_dict(), best_model_name)                                   # This is how you save models in pytorch
+            epochs_without_improvement = 0
+
+        elif epochs_without_improvement < patience:                                        # If the model hasn't improved this epoch store that
+            epochs_without_improvement += 1
+        else:                                                                              # If the model hasn't improved in 'patience' epochs stop the training.
+            break
+        
+        previous_weigths_name = "previous/previous_wieghts" + training_name
+        previous_optim_name = "previous/previous_optim" + training_name
+        if train_loss > 1.5*np.min(train_losses):                                          # EGNNs are quite unstable, this reverts the model to a previous state if an epoch blows up
+            model.load_state_dict(torch.load(previous_weigths_name, map_location=torch.device(device)))
+            optimiser.load_state_dict(torch.load(previous_optim_name, map_location=torch.device(device)))
+        if train_loss == np.min(train_losses):
+            torch.save(model.state_dict(), previous_weigths_name)        
+            torch.save(optimiser.state_dict(), previous_optim_name)
+
+        losses_file = "losses/training_loss" + training_name + ".json" 
+        with open(losses_file, 'w') as f:
+            dic = {'train_losses': train_losses,
+                   'val_lossers': val_losses,
+                   'cdr_rmsd': cdr_rmsds}
+            json.dump(dic, f)
+
+
+        print("{:6.2f} | {:6.2f}".format(train_loss, val_loss))
+    
+    return train_losses, val_losses

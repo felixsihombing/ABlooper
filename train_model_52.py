@@ -1,4 +1,5 @@
 import numpy as np
+from retrain_ablooper.training import train_model_2optim
 from rich.progress import track
 import copy
 import torch
@@ -107,8 +108,9 @@ print('Start training')
 # initialise model
 model = MaskDecoyGen(decoys=5).to(device = device).float()
 
-# set optimiser
-optimiser = torch.optim.RAdam(model.parameters(), lr=1e-3, weight_decay=1e-3)
+# set optimisers
+optimiser1 = torch.optim.RAdam(model.parameters(), lr=1e-3, weight_decay=1e-3)
+optimiser2 = torch.optim.Adam(model.parameters(), lr=1e-4, weight_decay=1e-4)
 
 # Step to actually train the network
-train_losses, val_losses = train_model(model, optimiser, train_dataloader, val_dataloader, training_name='-2504-Radam-5-2' , n_epochs=5000, patience=100, decoys=5)
+train_losses, val_losses = train_model_2optim(model, optimiser1, optimiser2, train_dataloader, val_dataloader, training_name='-2804-Radam-5-2optim' , n_epochs=5000, patience=100, decoys=5)

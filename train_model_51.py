@@ -1,4 +1,5 @@
 import numpy as np
+from retrain_ablooper.training import train_model_lrsched
 from rich.progress import track
 import copy
 import torch
@@ -76,7 +77,7 @@ train, validation = train_test_split(data, test_size=100, random_state=42)
 
 print(f'Size train set: {len(train)}, val set: {len(validation)}, test set: {len(test)}')
 
-batch_size = 1
+batch_size = 4
 num_workers = 4
 train_dataloader = torch.utils.data.DataLoader(train, 
                                                batch_size=batch_size,   # Batch size
@@ -109,6 +110,7 @@ model = MaskDecoyGen(decoys=5).to(device = device).float()
 
 # set optimiser
 optimiser = torch.optim.RAdam(model.parameters(), lr=1e-3, weight_decay=1e-3)
+lr_sched = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimiser, T_0=20, eta_min=1e-4, last_epoch=-1)
 
-# Step to actually train the network
-train_losses, val_losses = train_model(model, optimiser, train_dataloader, val_dataloader, training_name='-2504-Radam-5-1' , n_epochs=5000, patience=100, decoys=5)
+# train
+train_losses, val_losses = train_model_lrsched(model, optimiser, lr_sched, train_dataloader, val_dataloader, training_name='-2804-Radam-5-lrsched' , n_epochs=5000, patience=100, decoys=5)
