@@ -2,7 +2,7 @@
 from SabDab and reformat them to the model inputs'''
 
 from re import A
-# from ABDB import database as db
+from ABDB import database as db
 import numpy as np
 from rich.progress import track
 import copy
