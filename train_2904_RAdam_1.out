@@ -1,0 +1,18 @@
+Import data
+Number of fabs after import 4927
+Filter data
+N fabs before filter: 4927, n fabs after filter: 4691
+N fabs before filter: 46, n fabs after filter: 46
+N fabs before filter: 4691, n fabs after filter: 4344
+N fabs before filter: 46, n fabs after filter: 46
+N fabs before filter: 4344, n fabs after filter: 4277
+Format data
+Preparing model inputs ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+Preparing model outputs ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+Preparing model inputs ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+Preparing model outputs ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+Size train/val set:  4277 , size test set: 46
+Prepare dataloaders
+Size train set: 4177, val set: 100, test set: 46
+Start training
+ Train |  Val 
