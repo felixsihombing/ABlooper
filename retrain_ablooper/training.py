@@ -25,7 +25,7 @@ def mask_run_epoch(model, optim, train_dataloader, val_dataloader, decoys=5, gra
     for i,data in enumerate(train_dataloader):                         # For each batch of data in the dataset
         coordinates, geomouts, node_features, mask = data['geomins'].float().to(device), data['geomouts'].float().to(device), data['encodings'].float().to(device), data['mask'].float().to(device)
 
-        pred = model(node_features, coordinates, mask)
+        pred = model(node_features, coordinates, mask)                 # decoys x batch x nodes x dimensions
         optim.zero_grad()                                              # Delete old gradients
 
         loss = rmsd(geomouts, pred)

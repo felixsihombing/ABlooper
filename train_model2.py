@@ -1,4 +1,5 @@
 import numpy as np
+from retrain_ablooper.training import train_model_2optim
 from rich.progress import track
 import copy
 import torch
@@ -76,8 +77,8 @@ train, validation = train_test_split(data, test_size=100, random_state=42)
 
 print(f'Size train set: {len(train)}, val set: {len(validation)}, test set: {len(test)}')
 
-batch_size = 1
-num_workers = 1
+batch_size = 4
+num_workers = 4
 train_dataloader = torch.utils.data.DataLoader(train, 
                                                batch_size=batch_size,   # Batch size
                                                num_workers=num_workers,           # Number of cpu's allocated to load the data (recommended is 4/GPU)
@@ -107,8 +108,9 @@ print('Start training')
 # initialise model
 model = MaskDecoyGen(decoys=1).to(device = device).float()
 
-# set optimiser
-optimiser = torch.optim.RAdam(model.parameters(), lr=1e-3, weight_decay=1e-3)
+# set optimisers
+optimiser1 = torch.optim.RAdam(model.parameters(), lr=1e-3, weight_decay=1e-3)
+optimiser2 = torch.optim.Adam(model.parameters(), lr=1e-4, weight_decay=1e-4)
 
 # Step to actually train the network
-train_losses, val_losses = train_model(model, optimiser, train_dataloader, val_dataloader, training_name='-2104-RAdam-1' , n_epochs=5000, patience=100, decoys=1)
+train_losses, val_losses = train_model_2optim(model, optimiser1, optimiser2, train_dataloader, val_dataloader, training_name='-3004-Radam-1-2optim' , n_epochs=5000, patience=100, decoys=1)
