@@ -17,6 +17,6 @@ source /homes/spoendli/miniconda3/etc/profile.d/conda.sh
 conda activate ab
 
 cd /homes/spoendli/ABlooper/
-git pull ABlooper main
+git pull
 pip install .
-python -u train_model2.py > train_3004_2optim_1.out
+python -u train_model2.py > outfiles/train_3004_2optim_1.out
