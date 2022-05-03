@@ -113,4 +113,4 @@ optimiser1 = torch.optim.RAdam(model.parameters(), lr=1e-3, weight_decay=1e-3)
 optimiser2 = torch.optim.Adam(model.parameters(), lr=1e-4, weight_decay=1e-4)
 
 # Step to actually train the network
-train_losses, val_losses = train_model_2optim(model, optimiser1, optimiser2, train_dataloader, val_dataloader, training_name='-0305-Radam-1-2optim-1' , n_epochs=5000, patience=100, decoys=1)
+train_losses, val_losses = train_model_2optim(model, optimiser1, optimiser2, train_dataloader, val_dataloader, training_name='-0305-Radam-1-2optim-2' , n_epochs=5000, patience=100, decoys=1)
