@@ -23,7 +23,7 @@ train_val_set = set(all_pdbs_in_sabdab) - set(test_ids)
 print('train set:', len(train_val_set), 'all pdbs in sabdab set:', len(all_pdbs_in_sabdab), 'test set:', len(test_ids))
 
 print('load test set')
-CDR_seqs_test, CDR_BB_coords_test = get_sabdab_fabs(test_ids)
+CDR_seqs_test, CDR_BB_coords_test, CDR_ids_test = get_sabdab_fabs(test_ids)
 
 with open('train_data/CDR_BB_coords_test.npy', 'wb') as outfile:
     np.save(outfile, CDR_BB_coords_test)
@@ -31,12 +31,18 @@ with open('train_data/CDR_BB_coords_test.npy', 'wb') as outfile:
 with open('train_data/CDR_seqs_test.npy', 'wb') as outfile:
     np.save(outfile, CDR_seqs_test)
 
+with open('train_data/CDR_ids_test.npy', 'wb') as outfile:
+    np.save(outfile, CDR_ids_test)
+
 
 print('load training and validation set')
-CDR_seqs, CDR_BB_coords = get_sabdab_fabs(train_val_set)
+CDR_seqs, CDR_BB_coords, CDR_ids = get_sabdab_fabs(train_val_set)
 
 with open('train_data/CDR_BB_coords.npy', 'wb') as outfile:
     np.save(outfile, CDR_BB_coords)
 
 with open('train_data/CDR_seqs.npy', 'wb') as outfile:
     np.save(outfile, CDR_seqs)
+
+with open('train_data/CDR_ids.npy', 'wb') as outfile:
+    np.save(outfile, CDR_ids)

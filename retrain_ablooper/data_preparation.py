@@ -214,11 +214,14 @@ def get_sabdab_fabs(pdb_list):
                       each dictionary contains data of one FAB, keys: CDR, value: CDR sequence
     returns CDR_BB_coords: list of dictionaries,
                            each dictionary contains data of one FAB, keys: CDR, value: CDR backbone coordinates
+    returns CDR_ids: list of lists,
+                     contains the pdb id and chain names of each FAB
     '''
     pdb_list = filter_abs(pdb_list)
 
     CDR_seqs = list()
     CDR_BB_coords = list()
+    CDR_ids = list()
 
     for pdb_id in track(pdb_list, description='Load data from SAbDab'):
         pdb = db.fetch(pdb_id)
@@ -228,20 +231,22 @@ def get_sabdab_fabs(pdb_list):
                 cdr_seqs = get_cdr_anchor_seqs(ab_regions)
                 cdr_BB_coords = get_cdr_anchor_BB_coords(ab_regions)
 
+                CDR_ids.append([pdb_id, {'HC': fab.VH, 'LC': fab.VL}])
                 CDR_seqs.append(cdr_seqs)
                 CDR_BB_coords.append(cdr_BB_coords)
             except Exception:
                 pass
 
-    return CDR_seqs, CDR_BB_coords
+    return CDR_seqs, CDR_BB_coords, CDR_ids
 
 # functions to filter fabs
-def filter_CDR_length(CDR_seqs, CDR_BB_coords, length_cutoff=20):
+def filter_CDR_length(CDR_seqs, CDR_BB_coords, CDR_ids, length_cutoff=20):
     '''
     Removes all entries from CDR_seqs and CDR_BB_coords if their longest CDR is longer than 20 residues.
     '''
     filtered_CDR_seqs = []
     filtered_BB_coords = []
+    filtered_CDR_ids = []
     for i in range(len(CDR_seqs)):
         H1 = len(CDR_seqs[i]['H1'])
         H2 = len(CDR_seqs[i]['H2'])
@@ -256,10 +261,11 @@ def filter_CDR_length(CDR_seqs, CDR_BB_coords, length_cutoff=20):
         if longest <= (length_cutoff + 4): # two anchors on each side
             filtered_CDR_seqs.append(CDR_seqs[i])
             filtered_BB_coords.append(CDR_BB_coords[i])
+            filtered_CDR_ids.append(CDR_ids[i])
 
     print(f'N fabs before filter: {len(CDR_seqs)}, n fabs after filter: {len(filtered_CDR_seqs)}')
     
-    return filtered_CDR_seqs, filtered_BB_coords
+    return filtered_CDR_seqs, filtered_BB_coords, filtered_CDR_ids
 
 def get_CDR_sequence(CDR_seq):
     '''
@@ -271,7 +277,7 @@ def get_CDR_sequence(CDR_seq):
 
     return seq
     
-def remove_test_set_identities(CDR_seqs, CDR_BB_coords, CDR_seqs_test):
+def remove_test_set_identities(CDR_seqs, CDR_BB_coords, CDR_ids, CDR_seqs_test):
     '''
     Removes all fabs from train/val set with 100% CDR sequence identity then a sequence in the test set.
     '''
@@ -282,16 +288,18 @@ def remove_test_set_identities(CDR_seqs, CDR_BB_coords, CDR_seqs_test):
 
     filtered_CDR_seqs = []
     filtered_BB_coords = []
+    filtered_CDR_ids = []
     for i in range(len(CDR_seqs)):
         cdr_seq = get_CDR_sequence(CDR_seqs[i])
 
         if cdr_seq not in test_set_seqs:
             filtered_CDR_seqs.append(CDR_seqs[i])
             filtered_BB_coords.append(CDR_BB_coords[i])
+            filtered_CDR_ids.append(CDR_ids[i])
 
     print(f'N fabs before filter: {len(CDR_seqs)}, n fabs after filter: {len(filtered_CDR_seqs)}')
     
-    return filtered_CDR_seqs, filtered_BB_coords
+    return filtered_CDR_seqs, filtered_BB_coords, filtered_CDR_ids
 
 def dist(x1,x2):
     return np.sqrt(((x1-x2)**2).sum(-1))
@@ -323,13 +331,14 @@ def calcualte_BB_atom_distances(CDR_seq, CDR_BB_coord):
 
     return CA_CA_distance, CA_N_distance, CA_C_distance, C_N_distance, CA_CB_distance
 
-def filter_CA_distance(CDR_seqs, CDR_BB_coords):
+def filter_CA_distance(CDR_seqs, CDR_BB_coords, CDR_ids):
     '''
     Filters CDR_seqs and BB_coords for fabs which have a CA distance outside of a provided interval.
     This should remove all fabs with missing residues.
     '''
     filtered_CDR_seqs = []
     filtered_BB_coords = []
+    filtered_CDR_ids = []
 
     for i in range(len(CDR_seqs)):
         CA_CA_distance, _, _, _, _ = calcualte_BB_atom_distances(CDR_seqs[i], CDR_BB_coords[i])
@@ -339,10 +348,11 @@ def filter_CA_distance(CDR_seqs, CDR_BB_coords):
         if 2.8 <= min_dist and max_dist <= 4.8:
             filtered_CDR_seqs.append(CDR_seqs[i])
             filtered_BB_coords.append(CDR_BB_coords[i])
+            filtered_CDR_ids.append(CDR_ids[i])
 
     print(f'N fabs before filter: {len(CDR_seqs)}, n fabs after filter: {len(filtered_CDR_seqs)}')
     
-    return filtered_CDR_seqs, filtered_BB_coords
+    return filtered_CDR_seqs, filtered_BB_coords, filtered_CDR_ids
 
 # functions that convert data extracted from SAbDab to model input
 def encode(x, classes):
@@ -483,7 +493,7 @@ def prepare_model_output(CDR_BB_coords):
         geomouts.append(geomout)
     return geomouts
 
-def concatenate_data(encodings, geomins, geomouts, masks):
+def concatenate_data(encodings, geomins, geomouts, masks, CDR_ids):
     '''
     Puts encodings, geomins and geomouts into a single array.
     '''
@@ -493,7 +503,8 @@ def concatenate_data(encodings, geomins, geomouts, masks):
         data.append({'encodings': encodings[i],
                      'geomins': geomins[i],
                      'geomouts': geomouts[i],
-                     'mask': masks[i]})
+                     'mask': masks[i],
+                     'ids': CDR_ids[i]})
 
     return data
 
