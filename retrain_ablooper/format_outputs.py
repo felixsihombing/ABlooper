@@ -155,6 +155,6 @@ def pdb_for_set(predictions, geomouts, node_features, ids, out_dir, CDRs=['H1', 
         
         pdb_text = ''.join(pdb_text) +'END'
 
-        outfile = 'pdbs/'+out_dir+'/'+ids[i][0]+ids[i][0]['HC']+ids[i][0]['LC']+'.pdb'
+        outfile = 'pdbs/'+out_dir+'/'+ids[i][0][0]+ids[i][1]['HC'][0]+ids[i][1]['LC'][0]+'.pdb'
         with open(outfile, 'w') as f:
             f.write(pdb_text)
