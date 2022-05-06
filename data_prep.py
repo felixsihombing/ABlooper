@@ -103,7 +103,7 @@ test = concatenate_data(node_encodings_test, geomins_test, geomouts_test, masks_
 # split in train and validation sets
 train, validation = train_test_split(data, test_size=100, random_state=42)
 
-print('size of sets: train:', len(train), 'val:', len(validation), 'test:', len(test)
+print('size of sets: train:', len(train), 'val:', len(validation), 'test:', len(test))
 
 torch.save(train, 'train_data/train.pt')
 torch.save(validation, 'train_data/val.pt')
