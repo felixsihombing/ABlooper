@@ -5,7 +5,7 @@ from retrain_ablooper import *
 from ABDB import database as db
 from ABlooper.utils import filt
 from ABlooper.openmm_refine import openmm_refine
-from rich import track
+from rich.progress import track
 import torch
 import json
 
