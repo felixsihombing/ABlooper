@@ -2,6 +2,11 @@
 from retrain_ablooper import *
 import torch
 import math
+from ABlooper.utils import filt
+try:
+    from ABlooper.openmm_refine import openmm_refine
+except ModuleNotFoundError:
+    print('Cannot do refinement')
 
 def predict_on_val_set(val_dataloader, model):
     '''
@@ -158,3 +163,149 @@ def pdb_for_set(predictions, geomouts, node_features, ids, out_dir, CDRs=['H1', 
         outfile = 'pdbs/'+out_dir+'/'+ids[i][0][0]+ids[i][1]['HC'][0]+ids[i][1]['LC'][0]+'.pdb'
         with open(outfile, 'w') as f:
             f.write(pdb_text)
+
+def get_info_from_id(id):
+    '''
+    Return pdb id, chain names and path to the pdb file from an id.
+    '''
+    pdb_id = id[0][0]
+    heavy_c = id[1]['HC'][0]
+    light_c = id[1]['LC'][0]
+    path = db.fetch(pdb_id).filepath
+    pdb_file = "/".join(path.split("/")[:-1] + ["imgt"] + path.split("/")[-1:])
+
+    return pdb_id, heavy_c, light_c, pdb_file
+
+def get_framework_info(pdb_text, chains):
+    CDR_with_anchor_slices = {
+        "H1": (chains[0], (25, 40)),
+        "H2": (chains[0], (54, 67)),
+        "H3": (chains[0], (103, 119)),
+        "L1": (chains[1], (25, 40)),
+        "L2": (chains[1], (54, 67)),
+        "L3": (chains[1], (103, 119))}
+
+    atoms = ["CA", "N", "C", "CB"]
+
+    # For all three of these I extract the loop plus two anchors at either side as these are needed for the model.
+    CDR_text = {CDR: [x for x in pdb_text if filt(x, *CDR_with_anchor_slices[CDR])] for CDR in
+                    CDR_with_anchor_slices}
+
+    CDR_sequences = {
+        CDR: "".join([long2short[x.split()[3][-3:]] for x in CDR_text[CDR] if x.split()[2] == "CA"]) for CDR in
+        CDR_with_anchor_slices}
+
+    # Here I don't extract the anchors as this is only needed for writing predictions to pdb file.
+    CDR_numberings = {CDR: [x.split()[5] for x in CDR_text[CDR] if x.split()[2] == "CA"][2:-2] for CDR in
+                           CDR_text}
+
+    CDR_start_atom_id = {CDR: int([x.split()[1] for x in CDR_text[CDR] if x.split()[2] == "N"][2]) for CDR
+                              in CDR_text}
+    
+    return CDR_with_anchor_slices, atoms, CDR_text, CDR_sequences, CDR_numberings, CDR_start_atom_id
+
+def convert_predictions_into_text_for_each_CDR(CDR_start_atom_id, predicted_CDRs, CDR_sequences, CDR_numberings, CDR_with_anchor_slices):
+    pdb_format = {}
+    pdb_atoms = ["N", "CA", "C", "CB"]
+
+    permutation_to_reorder_atoms = [1, 0, 2, 3]
+
+    for CDR in CDR_start_atom_id:
+        new_text = []
+        BB_coords = predicted_CDRs[CDR]
+        seq = CDR_sequences[CDR][2:-2]
+        numbering = CDR_numberings[CDR]
+        atom_id = CDR_start_atom_id[CDR]
+        chain = CDR_with_anchor_slices[CDR][0]
+        for i, amino in enumerate(BB_coords):
+            amino_type = short2long[seq[i]]
+            for j, coord in enumerate(amino[permutation_to_reorder_atoms]):
+                if (pdb_atoms[j] == "CB") and (amino_type == "GLY"):
+                    continue
+                new_text.append(to_pdb_line(atom_id, pdb_atoms[j], amino_type, chain, numbering[i], coord))
+                atom_id += 1
+        pdb_format[CDR] = new_text
+
+    return pdb_format
+
+def produce_full_structures_of_val_set(val_dataloader, model, outdir='', relax=True, to_be_rewritten=["H1", "H2", "H3", "L1", "L2", "L3"]):
+    '''
+    Produces full FAB structure for a dataset
+    '''
+    CDR_rmsds_not_relaxed = list()
+    CDR_rmsds_relaxes = list()
+    decoy_diversities = list()
+    order_of_pdbs = list()
+
+    with torch.no_grad():
+        model.eval()
+
+        for data in track(val_dataloader, description='predict val set'):
+
+            # predict sturcture using the model
+            coordinates, geomout, node_feature, mask, id = data['geomins'].float().to(device), data['geomouts'].float().to(device), data['encodings'].float().to(device), data['mask'].float().to(device), data['ids']
+            pred = model(node_feature, coordinates, mask)
+            CDR_rmsds_not_relaxed.append(rmsd_per_cdr(pred, node_feature, geomout).tolist())
+            pred = pred.squeeze() # remove batch dimension
+            
+            # get framework info from pdb file
+            pdb_id, heavy_c, light_c, pdb_file = get_info_from_id(id)
+            chains = [heavy_c, light_c]
+            order_of_pdbs.append(pdb_id)
+
+            with open(pdb_file) as file:
+                pdb_text = [line for line in file.readlines()]
+
+            CDR_with_anchor_slices, atoms, CDR_text, CDR_sequences, CDR_numberings, CDR_start_atom_id = get_framework_info(pdb_text, chains)
+            
+            predicted_CDRs = {}
+            all_decoys = {}
+            decoy_diversity = {}
+
+            for i, CDR in enumerate(CDR_with_anchor_slices):
+                output_CDR = pred[:, node_feature[0, :, 30 + i] == 1.0]
+                all_decoys[CDR] = rearrange(output_CDR, "b (i a) d -> b i a d", a=4).cpu().numpy()
+                predicted_CDRs[CDR] = rearrange(output_CDR.mean(0), "(i a) d -> i a d", a=4).cpu().numpy()
+                decoy_diversity[CDR] = (output_CDR[None] - output_CDR[:, None]).pow(2).sum(-1).mean(-1).pow(
+                    1 / 2).sum().item() / 20
+            
+            decoy_diversities.append(list(decoy_diversity.values()))
+            
+            text_prediction_per_CDR = convert_predictions_into_text_for_each_CDR(CDR_start_atom_id, predicted_CDRs, CDR_sequences, CDR_numberings, CDR_with_anchor_slices)
+            old_text = pdb_text
+
+            for CDR in to_be_rewritten:
+                new = True
+                new_text = []
+                chain, CDR_slice = CDR_with_anchor_slices[CDR]
+                CDR_slice = (CDR_slice[0] + 2, CDR_slice[1] - 2)
+
+                for line in old_text:
+                    if not filt(line, chain, CDR_slice):
+                        new_text.append(line)
+                    elif new:
+                        new_text += text_prediction_per_CDR[CDR]
+                        new = False
+                    else:
+                        continue
+                old_text = new_text
+
+            header = [
+                "REMARK    CDR LOOPS REMODELLED USING ABLOOPER                                   \n"]
+            new_text = "".join(header + old_text)
+
+            if relax:
+                relaxed_text = openmm_refine(old_text, CDR_with_anchor_slices)
+                header.append("REMARK    REFINEMENT DONE USING OPENMM" + 42 * " " + "\n")
+                relaxed_text = "".join(header + relaxed_text)
+
+                with open('pdbs/'+outdir+'/'+pdb_id+'-'+heavy_c+light_c+'-relaxed.pdb', "w+") as file:
+                    file.write(new_text)
+
+            with open('pdbs/'+outdir+'/'+pdb_id+'-'+heavy_c+light_c+'.pdb', "w+") as file:
+                file.write(new_text)
+
+            with open('pdbs/'+outdir+'/'+pdb_id+'-'+heavy_c+light_c+'-true.pdb', "w+") as file:
+                file.write("".join(pdb_text))
+
+    return CDR_rmsds_not_relaxed, decoy_diversities, order_of_pdbs

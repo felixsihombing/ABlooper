@@ -89,7 +89,7 @@ def loop_resi_coords(coordinates, node_features, loop):
 
     return resi # output of size batch x 504 x 3
 
-def rmsd_per_cdr(pred, node_features, out_coordinates, CDRs):
+def rmsd_per_cdr(pred, node_features, out_coordinates, CDRs=["H1", "H2", "H3", "L1", "L2", "L3"]):
     '''
     Calculates the rmsd for a list of CDRs.
     '''

@@ -2,7 +2,10 @@
 from SabDab and reformat them to the model inputs'''
 
 from re import A
-from ABDB import database as db
+try:
+    from ABDB import database as db
+except ModuleNotFoundError:
+    pass
 import numpy as np
 from rich.progress import track
 import copy
@@ -509,15 +512,24 @@ def concatenate_data(encodings, geomins, geomouts, masks, CDR_ids):
     return data
 
 # creat mask
-def create_mask(node_encodings, mask_lenght=504):
+
+def create_mask(node_encoding, mask_lenght=504):
+    '''
+    Create mask for single fab
+    '''
+    mask = torch.zeros((mask_lenght))
+    mask[:len(node_encoding)] = 1
+
+    return mask
+
+def create_masks(node_encodings, mask_lenght=504):
     '''
     Function that creates a mask for each element in a array. Mask is of length <mask_lenght> 
     with 1s where there is an atom and filled up with 0s
     '''
     masks = []
     for node_encoding in node_encodings:
-        mask = torch.zeros((mask_lenght))
-        mask[:len(node_encoding)] = 1
+        mask = create_mask(node_encoding, mask_lenght=mask_lenght)
         masks.append(mask)
 
     return masks
@@ -530,6 +542,15 @@ def pad_tensor(tensor, out_lenght=504):
     ndim = tensor.shape[1]
     outtensor = torch.zeros((out_lenght, ndim))
     outtensor[:tensor.shape[0], :] = tensor
+    return outtensor
+
+def pad_tensor_3D(tensor, out_lenght=504):
+    '''
+    Pads all tensors with 0 to the same number of nodes. Use this function when the input tensor has 3 dimensions
+    '''
+    ndim = tensor.shape[2]
+    outtensor = torch.zeros((tensor.shape[0], out_lenght, ndim))
+    outtensor[:, :tensor.shape[1], :] = tensor
     return outtensor
 
 def pad_list_of_tensors(tensors, pad_length=504):

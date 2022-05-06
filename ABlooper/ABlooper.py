@@ -1,9 +1,11 @@
+from retrain_ablooper.data_preparation import pad_tensor, pad_tensor_3D
 import torch
 import numpy as np
 from einops import rearrange
 from ABlooper.models import DecoyGen
 from ABlooper.utils import filt, rmsd, to_pdb_line, short2long, long2short, prepare_input_loop
 import os
+import retrain_ablooper
 
 try:
     from ABlooper.rosetta_refine import rosetta_refine
@@ -42,11 +44,11 @@ class CDR_Predictor:
         self.chains = chains
         self.model = model if model is not None else default_model
         self.CDR_with_anchor_slices = {
-            "H1": (chains[0], (25, 39)),
-            "H2": (chains[0], (55, 66)),
-            "H3": (chains[0], (105, 119)),
-            "L1": (chains[1], (22, 42)),
-            "L2": (chains[1], (54, 71)),
+            "H1": (chains[0], (25, 40)),
+            "H2": (chains[0], (54, 67)),
+            "H3": (chains[0], (103, 119)),
+            "L1": (chains[1], (25, 40)),
+            "L2": (chains[1], (54, 67)),
             "L3": (chains[1], (103, 119))}
         self.__atoms = ["CA", "N", "C", "CB"]
 
@@ -122,6 +124,7 @@ class CDR_Predictor:
 
         with torch.no_grad():
             input_encoding, input_geometry = self.__prepare_model_input()
+            
             output = self.model(input_encoding.to(device), input_geometry.to(device))
 
             for i, CDR in enumerate(self.CDR_with_anchor_slices):
@@ -136,7 +139,7 @@ class CDR_Predictor:
                     print("Warning: CDR-{} prediction for {} incorrect.".format(CDR, self.pdb_file))
                     print("Are you sure the provided structure is an IMGT numbered antibody?")
                     self.warn = False
-
+            print(self.predicted_CDRs)
         return self.predicted_CDRs
 
     def calculate_BB_rmsd_wrt_input(self):
