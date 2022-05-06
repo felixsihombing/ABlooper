@@ -294,6 +294,12 @@ def produce_full_structures_of_val_set(val_dataloader, model, outdir='', relax=T
                 "REMARK    CDR LOOPS REMODELLED USING ABLOOPER                                   \n"]
             new_text = "".join(header + old_text)
 
+            with open('pdbs/'+outdir+'/'+pdb_id+'-'+heavy_c+light_c+'.pdb', "w+") as file:
+                file.write(new_text)
+
+            with open('pdbs/'+outdir+'/'+pdb_id+'-'+heavy_c+light_c+'-true.pdb', "w+") as file:
+                file.write("".join(pdb_text))
+
             if relax:
                 relaxed_text = openmm_refine(old_text, CDR_with_anchor_slices)
                 header.append("REMARK    REFINEMENT DONE USING OPENMM" + 42 * " " + "\n")
@@ -301,11 +307,5 @@ def produce_full_structures_of_val_set(val_dataloader, model, outdir='', relax=T
 
                 with open('pdbs/'+outdir+'/'+pdb_id+'-'+heavy_c+light_c+'-relaxed.pdb', "w+") as file:
                     file.write(new_text)
-
-            with open('pdbs/'+outdir+'/'+pdb_id+'-'+heavy_c+light_c+'.pdb', "w+") as file:
-                file.write(new_text)
-
-            with open('pdbs/'+outdir+'/'+pdb_id+'-'+heavy_c+light_c+'-true.pdb', "w+") as file:
-                file.write("".join(pdb_text))
 
     return CDR_rmsds_not_relaxed, decoy_diversities, order_of_pdbs
