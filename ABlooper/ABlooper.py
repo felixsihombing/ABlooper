@@ -139,7 +139,7 @@ class CDR_Predictor:
                     print("Warning: CDR-{} prediction for {} incorrect.".format(CDR, self.pdb_file))
                     print("Are you sure the provided structure is an IMGT numbered antibody?")
                     self.warn = False
-            print(self.predicted_CDRs)
+
         return self.predicted_CDRs
 
     def calculate_BB_rmsd_wrt_input(self):

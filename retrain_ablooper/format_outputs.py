@@ -35,7 +35,7 @@ def rmsds_on_val_set(preds, geomouts, node_features, decoys=5):
     Gets rmsds for each fab in the validation set and each decoy
     '''
     CDRs = ["H1", "H2", "H3", "L1", "L2", "L3"]
-    cdr_rmsds = torch.zeros(100, decoys, 6)
+    cdr_rmsds = torch.zeros(len(preds), decoys, 6)
 
     for i in range(len(preds)): # loop through the predictions
         for j in range(decoys):
@@ -157,6 +157,8 @@ def pdb_for_set(predictions, geomouts, node_features, ids, out_dir, CDRs=['H1', 
             j += 1
             pdb_text += produce_pdb_text(decoy.squeeze(), node_feature.squeeze(), chains[j], CDRs)[n_anchors_before:-n_anchors_after]
 
+        if j > 1: # there are several decoys add mean
+            pdb_text += produce_pdb_text(prediction.mean(0).squeeze(), node_feature.squeeze(), 'M', CDRs)[n_anchors_before:-n_anchors_after]
         
         pdb_text = ''.join(pdb_text) +'END'
 
