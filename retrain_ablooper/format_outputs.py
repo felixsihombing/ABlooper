@@ -2,6 +2,7 @@
 from retrain_ablooper import *
 import torch
 import math
+from rich.progress import track
 from ABlooper.utils import filt
 try:
     from ABlooper.openmm_refine import openmm_refine
@@ -230,6 +231,16 @@ def convert_predictions_into_text_for_each_CDR(CDR_start_atom_id, predicted_CDRs
 
     return pdb_format
 
+def pdb_select_hc_lc(pdb_text, chains):
+    '''
+    Returns only lines of a pdb file which correspond to the heavy or light chain of the antibody
+    '''
+    atoms = [line for line in pdb_text if line.split()[0] == 'ATOM']
+    pdb_text_hc_lc = [line for line in atoms if line.split()[4] in chains]
+    
+    return pdb_text_hc_lc
+    
+
 def produce_full_structures_of_val_set(val_dataloader, model, outdir='', relax=True, to_be_rewritten=["H1", "H2", "H3", "L1", "L2", "L3"]):
     '''
     Produces full FAB structure for a dataset
@@ -257,6 +268,8 @@ def produce_full_structures_of_val_set(val_dataloader, model, outdir='', relax=T
 
             with open(pdb_file) as file:
                 pdb_text = [line for line in file.readlines()]
+                
+            pdb_text = pdb_select_hc_lc(pdb_text, chains)
 
             CDR_with_anchor_slices, atoms, CDR_text, CDR_sequences, CDR_numberings, CDR_start_atom_id = get_framework_info(pdb_text, chains)
             
@@ -308,6 +321,6 @@ def produce_full_structures_of_val_set(val_dataloader, model, outdir='', relax=T
                 relaxed_text = "".join(header + relaxed_text)
 
                 with open('pdbs/'+outdir+'/'+pdb_id+'-'+heavy_c+light_c+'-relaxed.pdb', "w+") as file:
-                    file.write(new_text)
+                    file.write(relaxed_text)
 
     return CDR_rmsds_not_relaxed, decoy_diversities, order_of_pdbs
