@@ -39,26 +39,26 @@ test_dataloader = torch.utils.data.DataLoader(test,
                                               )
 
 model = MaskDecoyGen(decoys=5).to(device = device).float()
-model.load_state_dict(torch.load('best_models/best_model-2804-Radam-5-2optim', map_location=torch.device(device)))
+#model.load_state_dict(torch.load('best_models/best_model-2804-Radam-5-2optim', map_location=torch.device(device)))
 
-# for i in range(5):
-#     tmp = MaskDecoyGen(decoys=1).to(device = device).float()
-#     dict=torch.load("best_models/best_model-0305-Radam-1-2optim-"+str(i+1), map_location=torch.device(device))
-#     tmp.load_state_dict(dict)
-#     weights = tmp.blocks[0].state_dict()
-# 
-#     model.blocks[i].load_state_dict(weights)
-# 
+for i in range(5):
+    tmp = MaskDecoyGen(decoys=1).to(device = device).float()
+    dict=torch.load("best_models/best_model-0305-Radam-1-2optim-"+str(i+1), map_location=torch.device(device))
+    tmp.load_state_dict(dict)
+    weights = tmp.blocks[0].state_dict()
+
+    model.blocks[i].load_state_dict(weights)
+
 
 print('predict test set')
-cdr_rmsds, decoy_diversities, pdb_ids = produce_full_structures_of_val_set(test_dataloader, model, outdir='2804-Radam-5-2optim-test', relax=True)
+cdr_rmsds, decoy_diversities, pdb_ids = produce_full_structures_of_val_set(test_dataloader, model, outdir='0305-Radam-1-2optim-test', relax=True)
 
-with open('pdbs/2804-Radam-5-2optim-test/metrics.json', 'w') as f:
+with open('pdbs/0305-Radam-1-2optim-test/metrics.json', 'w') as f:
     json.dump({'pdb_ids': pdb_ids, 'cdr_rmsds': cdr_rmsds, 'decoy_divsersity': decoy_diversities}, f)
 
 print('predict val set')
-cdr_rmsds, decoy_diversities, pdb_ids = produce_full_structures_of_val_set(val_dataloader, model, outdir='2804-Radam-5-2optim', relax=True)
+cdr_rmsds, decoy_diversities, pdb_ids = produce_full_structures_of_val_set(val_dataloader, model, outdir='0305-Radam-1-2optim', relax=True)
 
-with open('pdbs/2804-Radam-5-2optim/metrics.json', 'w') as f:
+with open('pdbs/0305-Radam-1-2optim/metrics.json', 'w') as f:
     json.dump({'pdb_ids': pdb_ids, 'cdr_rmsds': cdr_rmsds, 'decoy_divsersity': decoy_diversities}, f)
 
