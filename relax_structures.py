@@ -51,14 +51,14 @@ model.load_state_dict(torch.load('best_models/best_model-2804-Radam-5-2optim', m
 # 
 
 print('predict test set')
-cdr_rmsds, decoy_diversities, pdb_ids = produce_full_structures_of_val_set(test_dataloader, model, outdir='2804-Radam-5-2optim-test', relax=True)
+cdr_rmsds, cdr_rmsds_relaxed, decoy_diversities, pdb_ids = produce_full_structures_of_val_set(test_dataloader, model, outdir='2804-Radam-5-2optim-test', relax=True)
 
 with open('pdbs/2804-Radam-5-2optim-test/metrics.json', 'w') as f:
-    json.dump({'pdb_ids': pdb_ids, 'cdr_rmsds': cdr_rmsds, 'decoy_divsersity': decoy_diversities}, f)
+    json.dump({'pdb_ids': pdb_ids, 'cdr_rmsds': cdr_rmsds, 'cdr_rmsds_relaxed': cdr_rmsds_relaxed, 'decoy_divsersity': decoy_diversities}, f)
 
 print('predict val set')
-cdr_rmsds, decoy_diversities, pdb_ids = produce_full_structures_of_val_set(val_dataloader, model, outdir='2804-Radam-5-2optim', relax=True)
+cdr_rmsds, cdr_rmsds_relaxed, decoy_diversities, pdb_ids = produce_full_structures_of_val_set(val_dataloader, model, outdir='2804-Radam-5-2optim', relax=True)
 
 with open('pdbs/2804-Radam-5-2optim/metrics.json', 'w') as f:
-    json.dump({'pdb_ids': pdb_ids, 'cdr_rmsds': cdr_rmsds, 'decoy_divsersity': decoy_diversities}, f)
+    json.dump({'pdb_ids': pdb_ids, 'cdr_rmsds': cdr_rmsds, 'cdr_rmsds_relaxed': cdr_rmsds_relaxed, 'decoy_divsersity': decoy_diversities}, f)
 

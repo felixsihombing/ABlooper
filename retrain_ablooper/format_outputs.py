@@ -239,6 +239,37 @@ def pdb_select_hc_lc(pdb_text, chains):
     pdb_text_hc_lc = [line for line in atoms if line.split()[4] in chains]
     
     return pdb_text_hc_lc
+
+def extract_BB_coords(CDR_text, CDR_with_anchor_slices, CDR_sequences, atoms):
+    CDR_BB_coords = {}
+
+    for CDR in CDR_with_anchor_slices:
+        loop = CDR_text[CDR]
+
+        coors = np.zeros((len(CDR_sequences[CDR]), 4, 3))
+        coors[...] = float("Nan")
+
+        i = 0
+        res = loop[i].split()[5]
+
+        for line in loop:
+            cut = line.split()
+            if cut[5] != res:
+                res = cut[5]
+                i += 1
+            if cut[2] in atoms:
+                j = atoms.index(cut[2])
+                # Using split for coords doesn't always work. Following Biopython approach:
+                x = float(line[30:38])
+                y = float(line[38:46])
+                z = float(line[46:54])
+                coors[i, j] = np.array([x, y, z])
+
+        # If missed CB (GLY) then add CA instead
+        coors[:, 3] = np.where(np.all(coors[:, 3] != coors[:, 3], axis=-1, keepdims=True), coors[:, 0], coors[:, 3])
+        CDR_BB_coords[CDR] = coors
+
+    return CDR_BB_coords
     
 
 def produce_full_structures_of_val_set(val_dataloader, model, outdir='', relax=True, to_be_rewritten=["H1", "H2", "H3", "L1", "L2", "L3"]):
@@ -246,7 +277,7 @@ def produce_full_structures_of_val_set(val_dataloader, model, outdir='', relax=T
     Produces full FAB structure for a dataset
     '''
     CDR_rmsds_not_relaxed = list()
-    CDR_rmsds_relaxes = list()
+    CDR_rmsds_relaxed = list()
     decoy_diversities = list()
     order_of_pdbs = list()
 
@@ -272,7 +303,7 @@ def produce_full_structures_of_val_set(val_dataloader, model, outdir='', relax=T
             pdb_text = pdb_select_hc_lc(pdb_text, chains)
 
             CDR_with_anchor_slices, atoms, CDR_text, CDR_sequences, CDR_numberings, CDR_start_atom_id = get_framework_info(pdb_text, chains)
-            
+
             predicted_CDRs = {}
             all_decoys = {}
             decoy_diversity = {}
@@ -307,10 +338,10 @@ def produce_full_structures_of_val_set(val_dataloader, model, outdir='', relax=T
 
             header = [
                 "REMARK    CDR LOOPS REMODELLED USING ABLOOPER                                   \n"]
-            new_text = "".join(header + old_text)
+            new_text = header + old_text
 
             with open('pdbs/'+outdir+'/'+pdb_id+'-'+heavy_c+light_c+'.pdb', "w+") as file:
-                file.write(new_text)
+                file.write("".join(new_text))
 
             with open('pdbs/'+outdir+'/'+pdb_id+'-'+heavy_c+light_c+'-true.pdb', "w+") as file:
                 file.write("".join(pdb_text))
@@ -323,4 +354,16 @@ def produce_full_structures_of_val_set(val_dataloader, model, outdir='', relax=T
                 with open('pdbs/'+outdir+'/'+pdb_id+'-'+heavy_c+light_c+'-relaxed.pdb', "w+") as file:
                     file.write(relaxed_text)
 
-    return CDR_rmsds_not_relaxed, decoy_diversities, order_of_pdbs
+
+                # calculate rmsds of relaxed structures
+                CDR_with_anchor_slices, atoms, CDR_text, CDR_sequences, CDR_numberings, CDR_start_atom_id = get_framework_info(relaxed_text, chains)
+                CDR_BB_coords = extract_BB_coords(CDR_text, CDR_with_anchor_slices, CDR_sequences, atoms)
+
+                relaxed_coords = prepare_model_output([CDR_BB_coords])[0]
+                print(relaxed_coords.shape)
+                relaxed_coords = pad_tensor(relaxed_coords)
+                relaxed_coords = rearrange(relaxed_coords, 'i x -> () () i x')
+                CDR_rmsds_relaxed.append(rmsd_per_cdr(relaxed_coords, node_feature, geomout).tolist())
+
+
+    return CDR_rmsds_not_relaxed, CDR_rmsds_relaxed, decoy_diversities, order_of_pdbs

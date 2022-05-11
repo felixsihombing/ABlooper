@@ -85,7 +85,7 @@ class CDR_Predictor:
 
         for CDR in self.CDR_with_anchor_slices:
             loop = self.CDR_text[CDR]
-
+    
             coors = np.zeros((len(self.CDR_sequences[CDR]), 4, 3))
             coors[...] = float("Nan")
 
@@ -109,7 +109,7 @@ class CDR_Predictor:
             coors[:, 3] = np.where(np.all(coors[:, 3] != coors[:, 3], axis=-1, keepdims=True), coors[:, 0], coors[:, 3])
             self.CDR_BB_coords[CDR] = coors
 
-    def __prepare_model_input(self):
+    def prepare_model_input(self):
         encodings = []
         geomins = []
 

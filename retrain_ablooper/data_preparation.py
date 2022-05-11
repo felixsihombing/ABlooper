@@ -481,7 +481,7 @@ def prepare_model_output(CDR_BB_coords):
     Prepares model outputs for training, formated identically to inputs
     '''
     geomouts = []
-    for CDR_BB_coord in track(CDR_BB_coords, description='Preparing model outputs'):
+    for CDR_BB_coord in CDR_BB_coords:
         geomout = []
         for _, coords in CDR_BB_coord.items():
             geomout.append(coords)
