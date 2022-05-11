@@ -1,0 +1,10 @@
+N fabs before filter: 5085, n fabs after filter: 4839
+N fabs before filter: 46, n fabs after filter: 46
+N fabs before filter: 4839, n fabs after filter: 4483
+N fabs before filter: 46, n fabs after filter: 46
+N fabs before filter: 4483, n fabs after filter: 4412
+Preparing model inputs ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+Preparing model outputs ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+Preparing model inputs ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+Preparing model outputs ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+size of sets: train: 4312 val: 100 test: 46
