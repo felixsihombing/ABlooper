@@ -8,7 +8,7 @@ from einops import rearrange
 
 class MaskEGNN(torch.nn.Module):
     '''
-    Singel layer of an EGNN.
+    Single layer of an EGNN.
     '''
     def __init__(self, node_dim, message_dim=32):
         super().__init__()

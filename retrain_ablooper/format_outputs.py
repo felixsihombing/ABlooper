@@ -271,7 +271,6 @@ def extract_BB_coords(CDR_text, CDR_with_anchor_slices, CDR_sequences, atoms):
 
     return CDR_BB_coords
     
-
 def produce_full_structures_of_val_set(val_dataloader, model, outdir='', relax=True, to_be_rewritten=["H1", "H2", "H3", "L1", "L2", "L3"]):
     '''
     Produces full FAB structure for a dataset
@@ -349,10 +348,10 @@ def produce_full_structures_of_val_set(val_dataloader, model, outdir='', relax=T
             if relax:
                 relaxed_text = openmm_refine(old_text, CDR_with_anchor_slices)
                 header.append("REMARK    REFINEMENT DONE USING OPENMM" + 42 * " " + "\n")
-                relaxed_text = "".join(header + relaxed_text)
+                relaxed_text = header + relaxed_text
 
                 with open('pdbs/'+outdir+'/'+pdb_id+'-'+heavy_c+light_c+'-relaxed.pdb', "w+") as file:
-                    file.write(relaxed_text)
+                    file.write(''.join(relaxed_text))
 
 
                 # calculate rmsds of relaxed structures
@@ -360,7 +359,7 @@ def produce_full_structures_of_val_set(val_dataloader, model, outdir='', relax=T
                 CDR_BB_coords = extract_BB_coords(CDR_text, CDR_with_anchor_slices, CDR_sequences, atoms)
 
                 relaxed_coords = prepare_model_output([CDR_BB_coords])[0]
-                print(relaxed_coords.shape)
+            
                 relaxed_coords = pad_tensor(relaxed_coords)
                 relaxed_coords = rearrange(relaxed_coords, 'i x -> () () i x')
                 CDR_rmsds_relaxed.append(rmsd_per_cdr(relaxed_coords, node_feature, geomout).tolist())
