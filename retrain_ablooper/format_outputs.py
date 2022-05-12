@@ -286,8 +286,6 @@ def produce_full_structures_of_val_set(val_dataloader, model, outdir='', relax=T
 
         for data in track(val_dataloader, description='predict val set'):
 
-            print(data['ids'][0])
-
             # predict sturcture using the model
             coordinates, geomout, node_feature, mask, id = data['geomins'].float().to(device), data['geomouts'].float().to(device), data['encodings'].float().to(device), data['mask'].float().to(device), data['ids']
             pred = model(node_feature, coordinates, mask)
