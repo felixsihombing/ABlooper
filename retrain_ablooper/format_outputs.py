@@ -188,7 +188,7 @@ def get_framework_info(pdb_text, chains):
         "L2": (chains[1], (54, 67)),
         "L3": (chains[1], (103, 119))}
 
-    atoms = ["CA", "N", "C", "CB"]
+    atoms = ["CA", "C", "N", "CB"]
 
     # For all three of these I extract the loop plus two anchors at either side as these are needed for the model.
     CDR_text = {CDR: [x for x in pdb_text if filt(x, *CDR_with_anchor_slices[CDR])] for CDR in
@@ -209,7 +209,7 @@ def get_framework_info(pdb_text, chains):
 
 def convert_predictions_into_text_for_each_CDR(CDR_start_atom_id, predicted_CDRs, CDR_sequences, CDR_numberings, CDR_with_anchor_slices):
     pdb_format = {}
-    pdb_atoms = ["CA", "C", "N", "CB"]
+    pdb_atoms = ["N", "CA", "C", "CB"]
 
     permutation_to_reorder_atoms = [1, 0, 2, 3]
 
