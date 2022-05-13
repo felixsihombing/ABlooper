@@ -380,6 +380,7 @@ def produce_full_structures_of_val_set(val_dataloader, model, outdir='', relax=T
                 coords2 = prepare_model_output([CDR_BB_coords2])[0]
             
                 coords2 = pad_tensor(coords2)
+                coords2 = rearrange(coords2, 'i x -> () i x')
                 CDR_rmsds_relaxed_2.append(rmsd_per_cdr(relaxed_coords, node_feature, coords2).tolist())
 
 
