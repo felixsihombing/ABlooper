@@ -51,14 +51,17 @@ for i in range(5):
 
 
 print('predict test set')
-cdr_rmsds, cdr_rmsds_relaxed, decoy_diversities, pdb_ids = produce_full_structures_of_val_set(test_dataloader, model, outdir='0305-Radam-1-2optim-test', relax=True)
+CDR_rmsds_not_relaxed, CDR_rmsds_relaxed, decoy_diversities, order_of_pdbs, node_features, CDR_rmsds_relaxed_2, CDR_rmsds_not_relaxed_2, CDR_sequences_not_relaxed, CDR_sequences_relaxed = produce_full_structures_of_val_set(test_dataloader, model, outdir='0305-Radam-1-2optim-test', relax=True)
 
 with open('pdbs/0305-Radam-1-2optim-test/metrics.json', 'w') as f:
-    json.dump({'pdb_ids': pdb_ids, 'cdr_rmsds': cdr_rmsds, 'cdr_rmsds_relaxed': cdr_rmsds_relaxed, 'decoy_divsersity': decoy_diversities}, f)
+    json.dump({'pdb_ids': order_of_pdbs, 'cdr_rmsds_not': CDR_rmsds_not_relaxed,
+               'cdr_rmsds_not_2': CDR_rmsds_not_relaxed_2, 'cdr_rmsds_relaxed': CDR_rmsds_relaxed,
+               'cdr_rmsds_relaxed_2': CDR_rmsds_relaxed_2, 'CDR_seq_not': CDR_sequences_not_relaxed,
+               'CDR_seq_relaxed': CDR_sequences_relaxed, 'node_feats': node_features, 'decoy_divsersity': decoy_diversities}, f)
 
-print('predict val set')
-cdr_rmsds, cdr_rmsds_relaxed, decoy_diversities, pdb_ids = produce_full_structures_of_val_set(val_dataloader, model, outdir='0305-Radam-1-2optim', relax=True)
-
-with open('pdbs/0305-Radam-1-2optim/metrics.json', 'w') as f:
-    json.dump({'pdb_ids': pdb_ids, 'cdr_rmsds': cdr_rmsds, 'cdr_rmsds_relaxed': cdr_rmsds_relaxed, 'decoy_divsersity': decoy_diversities}, f)
-
+#print('predict val set')
+#cdr_rmsds, cdr_rmsds_relaxed, decoy_diversities, pdb_ids = produce_full_structures_of_val_set(val_dataloader, model, outdir='0305-Radam-1-2optim', relax=True)
+#
+#with open('pdbs/0305-Radam-1-2optim/metrics.json', 'w') as f:
+#    json.dump({'pdb_ids': pdb_ids, 'cdr_rmsds': cdr_rmsds, 'cdr_rmsds_relaxed': cdr_rmsds_relaxed, 'decoy_divsersity': decoy_diversities}, f)
+#
