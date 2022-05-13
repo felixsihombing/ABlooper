@@ -209,7 +209,7 @@ def get_framework_info(pdb_text, chains):
 
 def convert_predictions_into_text_for_each_CDR(CDR_start_atom_id, predicted_CDRs, CDR_sequences, CDR_numberings, CDR_with_anchor_slices):
     pdb_format = {}
-    pdb_atoms = ["N", "CA", "C", "CB"]
+    pdb_atoms = ["CA", "C", "N", "CB"]
 
     permutation_to_reorder_atoms = [1, 0, 2, 3]
 
