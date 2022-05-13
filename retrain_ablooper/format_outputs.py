@@ -296,7 +296,7 @@ def produce_full_structures_of_val_set(val_dataloader, model, outdir='', relax=T
             CDR_rmsds_not_relaxed.append(rmsd_per_cdr(pred, node_feature, geomout).tolist())
             pred = pred.squeeze() # remove batch dimension
 
-            node_features.append(node_feature)
+            node_features.append(node_feature.tolist())
             
             # get framework info from pdb file
             pdb_id, heavy_c, light_c, pdb_file = get_info_from_id(id)
