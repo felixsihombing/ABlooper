@@ -279,16 +279,18 @@ def produce_full_structures_of_val_set(val_dataloader, model, outdir='', relax=T
     CDR_rmsds_relaxed = list()
     CDR_rmsds_relaxed = list()
     decoy_diversities = list()
+    pdb_ids = list()
 
     with torch.no_grad():
         model.eval()
 
-        for data in track(val_dataloader, description='predict val set'):
+        for data in track(val_dataloader, description='predict set'):
 
             # predict sturcture using the model
             coordinates, geomout, node_feature, mask, id = data['geomins'].float().to(device), data['geomouts'].float().to(device), data['encodings'].float().to(device), data['mask'].float().to(device), data['ids']
             pred = model(node_feature, coordinates, mask)
             pred = pred.squeeze() # remove batch dimension
+            pdb_ids.append(id)
             
             # get framework info from pdb file
             pdb_id, heavy_c, light_c, pdb_file = get_info_from_id(id)
@@ -363,4 +365,4 @@ def produce_full_structures_of_val_set(val_dataloader, model, outdir='', relax=T
                 CDR_rmsds_relaxed.append(rmsd_per_cdr(relaxed_coords, node_feature, geomout).tolist())
 
 
-    return CDR_rmsds_not_relaxed, CDR_rmsds_relaxed, decoy_diversities
+    return pdb_ids, CDR_rmsds_not_relaxed, CDR_rmsds_relaxed, decoy_diversities
