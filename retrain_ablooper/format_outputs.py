@@ -211,7 +211,7 @@ def convert_predictions_into_text_for_each_CDR(CDR_start_atom_id, predicted_CDRs
     pdb_format = {}
     pdb_atoms = ["N", "CA", "C", "CB"]
 
-    permutation_to_reorder_atoms = [1, 0, 2, 3]
+    permutation_to_reorder_atoms = [1, 2, 0, 3]
 
     for CDR in CDR_start_atom_id:
         new_text = []
@@ -277,13 +277,8 @@ def produce_full_structures_of_val_set(val_dataloader, model, outdir='', relax=T
     '''
     CDR_rmsds_not_relaxed = list()
     CDR_rmsds_relaxed = list()
-    CDR_rmsds_relaxed_2 = list()
-    CDR_rmsds_not_relaxed_2 = list()
-    node_features = list()
-    CDR_sequences_not_relaxed = list()
-    CDR_sequences_relaxed = list()
+    CDR_rmsds_relaxed = list()
     decoy_diversities = list()
-    order_of_pdbs = list()
 
     with torch.no_grad():
         model.eval()
@@ -293,15 +288,11 @@ def produce_full_structures_of_val_set(val_dataloader, model, outdir='', relax=T
             # predict sturcture using the model
             coordinates, geomout, node_feature, mask, id = data['geomins'].float().to(device), data['geomouts'].float().to(device), data['encodings'].float().to(device), data['mask'].float().to(device), data['ids']
             pred = model(node_feature, coordinates, mask)
-            CDR_rmsds_not_relaxed.append(rmsd_per_cdr(pred, node_feature, geomout).tolist())
             pred = pred.squeeze() # remove batch dimension
-
-            node_features.append(node_feature.tolist())
             
             # get framework info from pdb file
             pdb_id, heavy_c, light_c, pdb_file = get_info_from_id(id)
             chains = [heavy_c, light_c]
-            order_of_pdbs.append(pdb_id)
 
             with open(pdb_file) as file:
                 pdb_text = [line for line in file.readlines()]
@@ -315,7 +306,7 @@ def produce_full_structures_of_val_set(val_dataloader, model, outdir='', relax=T
             decoy_diversity = {}
 
             for i, CDR in enumerate(CDR_with_anchor_slices):
-                output_CDR = pred[:, node_feature[0, :, 30 + i] == 1.0]
+                output_CDR = pred[:, node_feature[0, :, 30 + i] == 1.0] # removed anchor residues
                 all_decoys[CDR] = rearrange(output_CDR, "b (i a) d -> b i a d", a=4).cpu().numpy()
                 predicted_CDRs[CDR] = rearrange(output_CDR.mean(0), "(i a) d -> i a d", a=4).cpu().numpy()
                 decoy_diversity[CDR] = (output_CDR[None] - output_CDR[:, None]).pow(2).sum(-1).mean(-1).pow(
@@ -353,7 +344,7 @@ def produce_full_structures_of_val_set(val_dataloader, model, outdir='', relax=T
                 file.write("".join(pdb_text))
 
             if relax:
-                relaxed_text = openmm_refine(old_text, CDR_with_anchor_slices)
+                relaxed_text = openmm_refine(new_text, CDR_with_anchor_slices)
                 header.append("REMARK    REFINEMENT DONE USING OPENMM" + 42 * " " + "\n")
                 relaxed_text = header + relaxed_text
 
@@ -363,7 +354,6 @@ def produce_full_structures_of_val_set(val_dataloader, model, outdir='', relax=T
 
                 # calculate rmsds of relaxed structures
                 CDR_with_anchor_slices, atoms, CDR_text, CDR_sequences, CDR_numberings, CDR_start_atom_id = get_framework_info(relaxed_text, chains)
-                CDR_sequences_relaxed.append(CDR_sequences)
                 CDR_BB_coords = extract_BB_coords(CDR_text, CDR_with_anchor_slices, CDR_sequences, atoms)
 
                 relaxed_coords = prepare_model_output([CDR_BB_coords])[0]
@@ -373,28 +363,4 @@ def produce_full_structures_of_val_set(val_dataloader, model, outdir='', relax=T
                 CDR_rmsds_relaxed.append(rmsd_per_cdr(relaxed_coords, node_feature, geomout).tolist())
 
 
-
-                CDR_with_anchor_slices2, atoms2, CDR_text2, CDR_sequences2, CDR_numberings2, CDR_start_atom_id2 = get_framework_info(pdb_text, chains)
-                CDR_BB_coords2 = extract_BB_coords(CDR_text2, CDR_with_anchor_slices2, CDR_sequences2, atoms2)
-
-                coords2 = prepare_model_output([CDR_BB_coords2])[0]
-            
-                coords2 = pad_tensor(coords2)
-                coords2 = rearrange(coords2, 'i x -> () i x')
-                CDR_rmsds_relaxed_2.append(rmsd_per_cdr(relaxed_coords, node_feature, coords2).tolist())
-
-
-
-            # calculate rmsds of relaxed structures
-            CDR_with_anchor_slices, atoms, CDR_text, CDR_sequences, CDR_numberings, CDR_start_atom_id = get_framework_info(new_text, chains)
-            CDR_sequences_not_relaxed.append(CDR_sequences)
-            CDR_BB_coords = extract_BB_coords(CDR_text, CDR_with_anchor_slices, CDR_sequences, atoms)
-
-            coords = prepare_model_output([CDR_BB_coords])[0]
-        
-            coords = pad_tensor(coords)
-            coords = rearrange(coords, 'i x -> () () i x')
-            CDR_rmsds_not_relaxed_2.append(rmsd_per_cdr(coords, node_feature, geomout).tolist())
-
-
-    return CDR_rmsds_not_relaxed, CDR_rmsds_relaxed, decoy_diversities, order_of_pdbs, node_features, CDR_rmsds_relaxed_2, CDR_rmsds_not_relaxed_2, CDR_sequences_not_relaxed, CDR_sequences_relaxed
+    return CDR_rmsds_not_relaxed, CDR_rmsds_relaxed, decoy_diversities
