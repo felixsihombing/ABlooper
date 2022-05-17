@@ -59,8 +59,8 @@ geomouts = prepare_model_output(CDR_BB_coords)
 geomins_test, node_encodings_test = prepare_model_inputs(CDR_seqs_test, CDR_BB_coords_test)
 geomouts_test = prepare_model_output(CDR_BB_coords_test)
 
-masks = create_mask(node_encodings)
-masks_test = create_mask(node_encodings_test)
+masks = create_masks(node_encodings)
+masks_test = create_masks(node_encodings_test)
 
 # pad all data
 node_encodings = pad_list_of_tensors(node_encodings)
