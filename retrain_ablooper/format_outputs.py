@@ -371,7 +371,7 @@ def produce_full_structures_of_val_set(val_dataloader, model, outdir='', relax=T
             coords = prepare_model_output([CDR_BB_coords])[0]
             coords = pad_tensor(coords)
             coords = rearrange(coords, 'i x -> () () i x')
-            CDR_rmsds_not_relaxed_recalc.append(rmsd_per_cdr(relaxed_coords, node_feature, geomout).tolist())
+            CDR_rmsds_not_relaxed_recalc.append(rmsd_per_cdr(coords, node_feature, geomout).tolist())
 
 
     return pdb_ids, CDR_rmsds_not_relaxed, CDR_rmsds_relaxed, decoy_diversities, CDR_rmsds_not_relaxed_recalc

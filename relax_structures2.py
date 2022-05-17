@@ -59,7 +59,7 @@ with open('pdbs/0305-Radam-1-2optim-test/metrics.json', 'w') as f:
     json.dump({'pdb_ids': pdb_ids, 'cdr_rmsds': CDR_rmsds_not_relaxed, 'cdr_rmsds_relaxed': CDR_rmsds_relaxed, 'decoy_divsersity': decoy_diversities, 'cdr_rmsds_recalc': CDR_rmsds_not_relaxed_recalc}, f)
 
 print('predict val set')
-pdb_ids, CDR_rmsds_not_relaxed, CDR_rmsds_relaxed, decoy_diversities, CDR_rmsds_not_relaxed_recalc = produce_full_structures_of_val_set(val_dataloader, model, outdir='0305-Radam-1-2optim-test', relax=True)
+pdb_ids, CDR_rmsds_not_relaxed, CDR_rmsds_relaxed, decoy_diversities, CDR_rmsds_not_relaxed_recalc = produce_full_structures_of_val_set(val_dataloader, model, outdir='0305-Radam-1-2optim', relax=True)
 
 with open('pdbs/0305-Radam-1-2optim/metrics.json', 'w') as f:
     json.dump({'pdb_ids': pdb_ids, 'cdr_rmsds': CDR_rmsds_not_relaxed, 'cdr_rmsds_relaxed': CDR_rmsds_relaxed, 'decoy_divsersity': decoy_diversities, 'cdr_rmsds_recalc': CDR_rmsds_not_relaxed_recalc}, f)
