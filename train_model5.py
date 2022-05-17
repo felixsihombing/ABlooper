@@ -19,11 +19,17 @@ with open('train_data/CDR_BB_coords.npy', 'rb') as infile:
 with open('train_data/CDR_seqs.npy', 'rb') as infile:
     CDR_seqs = np.load(infile, allow_pickle=True)
 
+with open('train_data/CDR_ids.npy', 'rb') as infile:
+    CDR_ids = np.load(infile, allow_pickle=True)
+
 with open('train_data/CDR_BB_coords_test.npy', 'rb') as infile:
     CDR_BB_coords_test = np.load(infile, allow_pickle=True)
 
 with open('train_data/CDR_seqs_test.npy', 'rb') as infile:
     CDR_seqs_test = np.load(infile, allow_pickle=True)
+
+with open('train_data/CDR_ids_test.npy', 'rb') as infile:
+    CDR_ids_test = np.load(infile, allow_pickle=True)
 
 print('Number of fabs after import', len(CDR_seqs))
 
@@ -31,13 +37,13 @@ print('Number of fabs after import', len(CDR_seqs))
 
 print('Filter data')
 # filter input data
-CDR_seqs, CDR_BB_coords = filter_CDR_length(CDR_seqs, CDR_BB_coords, length_cutoff=22)
-CDR_seqs_test, CDR_BB_coords_test = filter_CDR_length(CDR_seqs_test, CDR_BB_coords_test, length_cutoff=22)
+CDR_seqs, CDR_BB_coords, CDR_ids = filter_CDR_length(CDR_seqs, CDR_BB_coords, CDR_ids, length_cutoff=22)
+CDR_seqs_test, CDR_BB_coords_test, CDR_ids_test = filter_CDR_length(CDR_seqs_test, CDR_BB_coords_test, CDR_ids_test, length_cutoff=22)
 
-CDR_seqs, CDR_BB_coords = filter_CA_distance(CDR_seqs, CDR_BB_coords)
-CDR_seqs_test, CDR_BB_coords_test = filter_CA_distance(CDR_seqs_test, CDR_BB_coords_test)
+CDR_seqs, CDR_BB_coords, CDR_ids = filter_CA_distance(CDR_seqs, CDR_BB_coords, CDR_ids)
+CDR_seqs_test, CDR_BB_coords_test, CDR_ids_test = filter_CA_distance(CDR_seqs_test, CDR_BB_coords_test, CDR_ids_test)
 
-CDR_seqs, CDR_BB_coords = remove_test_set_identities(CDR_seqs, CDR_BB_coords, CDR_seqs_test)
+CDR_seqs, CDR_BB_coords, CDR_ids = remove_test_set_identities(CDR_seqs, CDR_BB_coords, CDR_ids, CDR_seqs_test)
 
 
 
@@ -64,8 +70,12 @@ node_encodings_test = pad_list_of_tensors(node_encodings_test)
 geomins_test = pad_list_of_tensors(geomins_test)
 geomouts_test = pad_list_of_tensors(geomouts_test)
 
-data = concatenate_data(node_encodings, geomins, geomouts, masks)
-test = concatenate_data(node_encodings_test, geomins_test, geomouts_test, masks_test)
+# convert from np array with dtype object to list to make compatible with torch
+CDR_ids = np.array(CDR_ids).tolist()
+CDR_ids_test = np.array(CDR_ids_test).tolist()
+
+data = concatenate_data(node_encodings, geomins, geomouts, masks, CDR_ids)
+test = concatenate_data(node_encodings_test, geomins_test, geomouts_test, masks_test, CDR_ids_test)
 print('Size train/val set: ', len(data), ', size test set:', len(test))
 
 
