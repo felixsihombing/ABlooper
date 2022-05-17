@@ -289,8 +289,8 @@ def produce_full_structures_of_val_set(val_dataloader, model, outdir='', relax=T
             # predict sturcture using the model
             coordinates, geomout, node_feature, mask, id = data['geomins'].float().to(device), data['geomouts'].float().to(device), data['encodings'].float().to(device), data['mask'].float().to(device), data['ids']
             pred = model(node_feature, coordinates, mask)
-            pred = pred.squeeze() # remove batch dimension
             CDR_rmsds_not_relaxed.append(rmsd_per_cdr(pred, node_feature, geomout).tolist())
+            pred = pred.squeeze() # remove batch dimension
             pdb_ids.append(id)
             
             # get framework info from pdb file
