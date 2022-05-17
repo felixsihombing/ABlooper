@@ -77,7 +77,7 @@ train, validation = train_test_split(data, test_size=100, random_state=42)
 
 print(f'Size train set: {len(train)}, val set: {len(validation)}, test set: {len(test)}')
 
-batch_size = 4
+batch_size = 1
 num_workers = 4
 train_dataloader = torch.utils.data.DataLoader(train, 
                                                batch_size=batch_size,   # Batch size
@@ -107,10 +107,10 @@ print('Start training')
 # train model
 # initialise model
 model = MaskDecoyGen(decoys=1).to(device = device).float()
+model.load_state_dict(torch.load('best_models/best_model-0305-Radam-1-2optim-1', map_location=torch.device(device)))
 
 # set optimisers
-optimiser1 = torch.optim.RAdam(model.parameters(), lr=1e-3, weight_decay=1e-3)
-optimiser2 = torch.optim.Adam(model.parameters(), lr=1e-4, weight_decay=1e-4)
+optimiser = torch.optim.Adam(model.parameters(), lr=1e-4, weight_decay=1e-4)
 
 # Step to actually train the network
-train_losses, val_losses = train_model_2optim(model, optimiser1, optimiser2, train_dataloader, val_dataloader, training_name='-0305-Radam-1-2optim-1' , n_epochs=5000, patience=100, decoys=1)
+train_losses, val_losses = train_model_refine(model, optimiser, train_dataloader, val_dataloader, training_name='-1705-refine-1-2' , n_epochs=5000, patience=100, decoys=1)
