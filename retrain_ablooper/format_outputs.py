@@ -290,6 +290,7 @@ def produce_full_structures_of_val_set(val_dataloader, model, outdir='', relax=T
             coordinates, geomout, node_feature, mask, id = data['geomins'].float().to(device), data['geomouts'].float().to(device), data['encodings'].float().to(device), data['mask'].float().to(device), data['ids']
             pred = model(node_feature, coordinates, mask)
             pred = pred.squeeze() # remove batch dimension
+            CDR_rmsds_not_relaxed.append(rmsd_per_cdr(pred, node_feature, geomout).tolist())
             pdb_ids.append(id)
             
             # get framework info from pdb file
@@ -367,12 +368,10 @@ def produce_full_structures_of_val_set(val_dataloader, model, outdir='', relax=T
             
             CDR_with_anchor_slices, atoms, CDR_text, CDR_sequences, CDR_numberings, CDR_start_atom_id = get_framework_info(new_text, chains)
             CDR_BB_coords = extract_BB_coords(CDR_text, CDR_with_anchor_slices, CDR_sequences, atoms)
-
             coords = prepare_model_output([CDR_BB_coords])[0]
-            
             coords = pad_tensor(coords)
             coords = rearrange(coords, 'i x -> () () i x')
-            CDR_rmsds_not_relaxed_recalc.append(rmsd_per_cdr(coords, node_feature, geomout).tolist())
+            CDR_rmsds_not_relaxed_recalc.append(rmsd_per_cdr(relaxed_coords, node_feature, geomout).tolist())
 
 
     return pdb_ids, CDR_rmsds_not_relaxed, CDR_rmsds_relaxed, decoy_diversities, CDR_rmsds_not_relaxed_recalc
