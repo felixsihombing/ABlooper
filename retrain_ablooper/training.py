@@ -255,15 +255,16 @@ def train_model_refine(model, optimiser, train_dataloader, val_dataloader, train
         val_losses.append(val_loss.tolist())
         cdr_rmsds.append(cdr_rmsd.tolist())
 
-        if np.min(val_losses) == val_loss:                                                 # If it is the best model on the validation set, save it
-            best_model_name = "best_models/best_model" + training_name
-            torch.save(model.state_dict(), best_model_name)                                   # This is how you save models in pytorch
-            epochs_without_improvement = 0
+        if len(val_loss) > 20: # val loss goes up during this training step, first few epochs will always be the best model
+            if np.min(val_losses) == val_loss:                                                 # If it is the best model on the validation set, save it
+                best_model_name = "best_models/best_model" + training_name
+                torch.save(model.state_dict(), best_model_name)                                   # This is how you save models in pytorch
+                epochs_without_improvement = 0
 
-        elif epochs_without_improvement < patience:                                        # If the model hasn't improved this epoch store that
-            epochs_without_improvement += 1
-        else:                                                                              # If the model hasn't improved in 'patience' epochs stop the training.
-            break
+            elif epochs_without_improvement < patience:                                        # If the model hasn't improved this epoch store that
+                epochs_without_improvement += 1
+            else:                                                                              # If the model hasn't improved in 'patience' epochs stop the training.
+                break
         
         previous_weigths_name = "previous/previous_wieghts" + training_name
         previous_optim_name = "previous/previous_optim" + training_name
