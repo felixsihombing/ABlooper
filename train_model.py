@@ -117,10 +117,11 @@ print('Start training')
 # train model
 # initialise model
 model = MaskDecoyGen(decoys=1).to(device = device).float()
-model.load_state_dict(torch.load('best_models/best_model-0305-Radam-1-2optim-5', map_location=torch.device(device)))
+model.load_state_dict(torch.load('best_models/best_model-0305-Radam-1-2optim-1', map_location=torch.device(device)))
 
 # set optimisers
 optimiser = torch.optim.Adam(model.parameters(), lr=1e-4, weight_decay=1e-4)
+optimiser.load_state_dict(torch.load('previous/previous_optim-0305-Radam-1-2optim-1', map_location=torch.device(device)))
 
 # Step to actually train the network
-train_losses, val_losses = train_model_refine(model, optimiser, train_dataloader, val_dataloader, training_name='-1805-refine-1-5' , n_epochs=5000, patience=100, decoys=1)
+train_losses, val_losses = train_model_refine(model, optimiser, train_dataloader, val_dataloader, training_name='-1805-refine-1-1' , n_epochs=5000, patience=100, decoys=1)

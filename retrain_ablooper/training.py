@@ -1,5 +1,6 @@
 '''Functions to train the model. To versions provided to train the model with mask and the one without'''
 
+from re import X
 from einops import rearrange
 import torch
 import numpy as np
@@ -12,7 +13,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 torch.set_default_dtype(torch.float)
 
 # train for one epoch with mask
-def mask_run_epoch(model, optim, train_dataloader, val_dataloader, decoys=5, grad_clip=10.0, ):
+def mask_run_epoch(model, optim, train_dataloader, val_dataloader, decoys=5, grad_clip=10.0):
     '''
     Function to train model for a single epoch with mask
     '''
@@ -249,14 +250,14 @@ def train_model_refine(model, optimiser, train_dataloader, val_dataloader, train
     for epoch in track(range(n_epochs), description='Train model'):
         
         dist_check_weight = 0.1 * epoch if epoch < 10 else 1 # start with weight of 0.1 and increase to 1, ensures that the loss is not too big at the beginning.
-        train_loss, val_loss, cdr_rmsd = mask_run_epoch_refine(model, optimiser, train_dataloader, val_dataloader, decoys=decoys, dist_check_weight=dist_check_weight)  # Run one epoch and get train and validation loss
+        train_loss, val_loss, cdr_rmsd = mask_run_epoch_refine(model, optimiser, train_dataloader, val_dataloader, decoys=decoys, grad_clip=0.1, dist_check_weight=dist_check_weight)  # Run one epoch and get train and validation loss
 
         train_losses.append(train_loss.tolist())                                                    # Store train and validation loss
         val_losses.append(val_loss.tolist())
         cdr_rmsds.append(cdr_rmsd.tolist())
 
-        if len(val_losses) > 20: # val loss goes up during this training step, first few epochs will always be the best model
-            if np.min(val_losses) == val_loss:                                                 # If it is the best model on the validation set, save it
+        if len(val_losses) >= 20: # val loss goes up during this training step, first few epochs will always be the best model
+            if np.min(val_losses[20:]) == val_loss:                                                 # If it is the best model on the validation set, save it
                 best_model_name = "best_models/best_model" + training_name
                 torch.save(model.state_dict(), best_model_name)                                   # This is how you save models in pytorch
                 epochs_without_improvement = 0
