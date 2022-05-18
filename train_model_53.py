@@ -120,4 +120,4 @@ model.load_state_dict(torch.load('best_models/best_model-2804-Radam-5-2optim', m
 optimiser = torch.optim.Adam(model.parameters(), lr=1e-4, weight_decay=1e-4)
 
 # Step to actually train the network
-train_losses, val_losses = train_model_refine(model, optimiser, train_dataloader, val_dataloader, training_name='-1705-refine-5-1' , n_epochs=5000, patience=100, decoys=5)
+train_losses, val_losses = train_model_refine(model, optimiser, train_dataloader, val_dataloader, training_name='-1805-refine-5-1' , n_epochs=5000, patience=100, decoys=5)
