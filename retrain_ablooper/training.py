@@ -255,7 +255,7 @@ def train_model_refine(model, optimiser, train_dataloader, val_dataloader, train
         val_losses.append(val_loss.tolist())
         cdr_rmsds.append(cdr_rmsd.tolist())
 
-        if len(val_loss) > 20: # val loss goes up during this training step, first few epochs will always be the best model
+        if len(val_losses) > 20: # val loss goes up during this training step, first few epochs will always be the best model
             if np.min(val_losses) == val_loss:                                                 # If it is the best model on the validation set, save it
                 best_model_name = "best_models/best_model" + training_name
                 torch.save(model.state_dict(), best_model_name)                                   # This is how you save models in pytorch
